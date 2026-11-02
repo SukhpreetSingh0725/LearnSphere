@@ -1,6 +1,10 @@
+require("dotenv").config();
+
 const express = require("express");
 const courses = require("./data/courses");
 const cors = require("cors");
+const connectDB = require("./config/db");
+
 const app = express();
 
 app.use(cors());
@@ -10,36 +14,41 @@ app.get("/", (req, res) => {
     res.send("Welcome to LearnSphere API!");
 });
 
-
 app.get("/api/health", (req, res) => {
     res.status(200).json({
         success: true,
-        message: "LearnSphere backend is running"
+        message: "LearnSphere backend is running",
+        database: "Connected"
     });
 });
 
 app.get("/api/courses", (req, res) => {
     let result = [...courses];
 
-    const { search, category, level, maxPrice, page = 1, limit = 10 } = req.query;
+    const {
+        search,
+        category,
+        level,
+        maxPrice,
+        page = 1,
+        limit = 10
+    } = req.query;
 
     if (search) {
-        result = result.filter((course) =>
+        result = result.filter(course =>
             course.title.toLowerCase().includes(search.toLowerCase())
         );
     }
 
     if (category) {
-        result = result.filter(
-            (course) =>
-                course.category.toLowerCase() === category.toLowerCase()
+        result = result.filter(course =>
+            course.category.toLowerCase() === category.toLowerCase()
         );
     }
 
     if (level) {
-        result = result.filter(
-            (course) =>
-                course.level.toLowerCase() === level.toLowerCase()
+        result = result.filter(course =>
+            course.level.toLowerCase() === level.toLowerCase()
         );
     }
 
@@ -53,9 +62,7 @@ app.get("/api/courses", (req, res) => {
             });
         }
 
-        result = result.filter(
-            (course) => course.price <= priceLimit
-        );
+        result = result.filter(course => course.price <= priceLimit);
     }
 
     const pageNumber = Number(page);
@@ -77,10 +84,7 @@ app.get("/api/courses", (req, res) => {
     const total = result.length;
     const startIndex = (pageNumber - 1) * pageSize;
 
-    result = result.slice(
-        startIndex,
-        startIndex + pageSize
-    );
+    result = result.slice(startIndex, startIndex + pageSize);
 
     res.status(200).json({
         success: true,
@@ -94,15 +98,15 @@ app.get("/api/courses", (req, res) => {
 app.get("/api/courses/:id", (req, res) => {
     const courseId = Number(req.params.id);
 
-    const course = courses.find(
-        (course) => course.id === courseId
-    );
+    const course = courses.find(course => course.id === courseId);
+
     if (!course) {
         return res.status(404).json({
             success: false,
             message: "Course not found"
         });
     }
+
     res.status(200).json({
         success: true,
         data: course
@@ -110,6 +114,20 @@ app.get("/api/courses/:id", (req, res) => {
 });
 
 
-app.listen(5000, () => {
-    console.log(`LearnSphere server running at http://localhost:5000`);
-});
+const PORT = process.env.PORT || 5000;
+
+const startServer = async () => {
+    try {
+        await connectDB();
+
+        app.listen(PORT, () => {
+            console.log(`LearnSphere server running at http://localhost:${PORT}`);
+        });
+
+    } catch (error) {
+        console.error("Server startup failed:", error.message);
+        process.exit(1);
+    }
+};
+
+startServer();
