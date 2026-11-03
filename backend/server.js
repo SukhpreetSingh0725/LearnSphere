@@ -5,12 +5,14 @@ const courses = require("./data/courses");
 const cors = require("cors");
 const connectDB = require("./config/db");
 const authRoutes = require("./routes/authRoutes");
-
+const courseRoutes = require("./routes/courseRoutes");
 const app = express();
 
 app.use(cors());
 app.use(express.json());
 app.use("/api/auth", authRoutes);
+app.use("/api/courses/manage", courseRoutes);
+
 
 app.get("/", (req, res) => {
     res.send("Welcome to LearnSphere API!");
