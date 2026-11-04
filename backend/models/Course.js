@@ -55,6 +55,11 @@ const courseSchema = new mongoose.Schema({
         type: String,
         enum: ["draft", "pending", "published", "rejected"],
         default: "draft"
+    },
+    
+    rejectionReason: {
+        type: String,
+        default: ""
     }
 
 }, {

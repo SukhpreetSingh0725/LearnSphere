@@ -1,13 +1,77 @@
 const express = require("express");
 
-const { createCourse } = require("../controllers/courseController");
+const { createCourse,
+        getMyCourses,
+        updateCourse,
+        deleteCourse,
+        submitCourse,
+        getPendingCourses,
+        approveCourse,
+        rejectCourse
+} = require("../controllers/courseController");
 
 const { protect } = require("../middleware/authMiddleware");
 const { authorizeRoles } = require("../middleware/roleMiddleware");
 
 const router = express.Router();
 
-// Create course (Instructor/Admin only)
+// Get instructor's courses
+router.get(
+    "/my-courses",
+    protect,
+    authorizeRoles("instructor", "admin"),
+    getMyCourses
+);
+
+// Get pending courses (Admin only)
+router.get(
+    "/admin/pending",
+    protect,
+    authorizeRoles("admin"),
+    getPendingCourses
+);
+
+// Approve course (Admin only)
+router.patch(
+    "/admin/:id/approve",
+    protect,
+    authorizeRoles("admin"),
+    approveCourse
+);
+
+// Reject course (Admin only)
+router.patch(
+    "/admin/:id/reject",
+    protect,
+    authorizeRoles("admin"),
+    rejectCourse
+);
+
+// Submit course for admin approval
+router.patch(
+    "/:id/submit",
+    protect,
+    authorizeRoles("instructor", "admin"),
+    submitCourse
+);
+
+// Update course
+router.put(
+    "/:id",
+    protect,
+    authorizeRoles("instructor", "admin"),
+    updateCourse
+);
+
+// Delete course
+router.delete(
+    "/:id",
+    protect,
+    authorizeRoles("instructor", "admin"),
+    deleteCourse
+);
+
+// Create course
 router.post(
     "/",
     protect,
