@@ -1,3 +1,4 @@
+import CourseCurriculum from "../components/CourseCurriculum";
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import "./CourseDetails.css";
@@ -179,6 +180,8 @@ function CourseDetails() {
                 <li>Access course lessons after enrollment.</li>
             </ul>
         </section>
+
+        <CourseCurriculum />
 
         <section className="instructor-profile">
             <h2>Meet Your Instructor</h2>
