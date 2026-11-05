@@ -174,6 +174,24 @@ function CourseDetails() {
             </ul>
         </section>
 
+        <section className="instructor-profile">
+            <h2>Meet Your Instructor</h2>
+
+            <div className="instructor-card">
+                <div className="instructor-avatar">
+                {instructor
+                    ? instructor.charAt(0).toUpperCase()
+                    : "I"}
+                </div>
+
+                <div className="instructor-details">
+                <h3>{instructor || "LearnSphere Instructor"}</h3>
+                <p>Course Instructor</p>
+                <span>Learn and grow with LearnSphere.</span>
+                </div>
+            </div>
+        </section>
+
         <section className="course-features">
           <h2>What You Will Get</h2>
 
