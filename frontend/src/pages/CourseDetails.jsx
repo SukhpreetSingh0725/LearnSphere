@@ -132,11 +132,46 @@ function CourseDetails() {
         </div>
 
         <section className="course-overview">
-          <h2>About This Course</h2>
-          <p>
-            {course.description ||
-              "This course is designed to help you learn new skills and improve your knowledge."}
-          </p>
+            <h2>About This Course</h2>
+            <p>
+                {course.description ||
+                "This course is designed to help you learn new skills and improve your knowledge."}
+            </p>
+
+            <div className="course-overview-details">
+                <div>
+                <span>📚</span>
+                <div>
+                    <strong>Course Level</strong>
+                    <p>{course.level || "Beginner"}</p>
+                </div>
+                </div>
+
+                <div>
+                <span>📂</span>
+                <div>
+                    <strong>Category</strong>
+                    <p>{course.category || "General"}</p>
+                </div>
+                </div>
+
+                <div>
+                <span>⭐</span>
+                <div>
+                    <strong>Course Rating</strong>
+                    <p>{course.rating || 0} / 5</p>
+                </div>
+                </div>
+            </div>
+
+            <h3>Why Learn This Course?</h3>
+
+            <ul className="course-benefits">
+                <li>Learn through structured course content.</li>
+                <li>Study at your own pace.</li>
+                <li>Track your learning progress.</li>
+                <li>Access course lessons after enrollment.</li>
+            </ul>
         </section>
 
         <section className="course-features">
