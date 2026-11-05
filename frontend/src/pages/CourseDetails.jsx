@@ -50,15 +50,21 @@ function CourseDetails() {
 
   if (error || !course) {
     return (
-      <div className="course-details-message">
-        <h2>Course Not Found</h2>
-        <p>{error || "This course is not available."}</p>
+        <div className="course-details-message">
+        <div className="error-icon">!</div>
+
+        <h2>Unable to Load Course</h2>
+
+        <p>
+            {error || "This course may have been removed or is unavailable."}
+        </p>
+
         <Link to="/" className="back-home-btn">
-          Back to Courses
+            Explore Other Courses
         </Link>
-      </div>
+        </div>
     );
-  }
+}
 
   const instructor =
     typeof course.instructor === "object"
