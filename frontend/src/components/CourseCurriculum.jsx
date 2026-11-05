@@ -67,9 +67,11 @@ function CourseCurriculum() {
           return (
             <div className="curriculum-item" key={section.id}>
               <button
+                type="button"
                 className="curriculum-section-button"
                 onClick={() => toggleSection(section.id)}
-                aria-expanded={isExpanded}
+               aria-expanded={isExpanded}
+               aria-label={`${isExpanded ? "Collapse" : "Expand"} ${section.title}`}
               >
                 <span className="curriculum-section-title">
                   {section.title}
