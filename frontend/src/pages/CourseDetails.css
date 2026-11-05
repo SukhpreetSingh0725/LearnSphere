@@ -303,3 +303,64 @@
     grid-template-columns: 1fr;
   }
 }
+.instructor-profile {
+  margin-top: 30px;
+  background: white;
+  padding: 35px;
+  border-radius: 16px;
+}
+
+.instructor-profile h2 {
+  margin: 0 0 22px;
+  color: #0f172a;
+}
+
+.instructor-card {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  background: #f8fafc;
+  padding: 22px;
+  border-radius: 12px;
+}
+
+.instructor-avatar {
+  width: 75px;
+  height: 75px;
+  min-width: 75px;
+  border-radius: 50%;
+  background: #2563eb;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 30px;
+  font-weight: bold;
+}
+
+.instructor-details h3 {
+  margin: 0 0 7px;
+  color: #0f172a;
+}
+
+.instructor-details p {
+  margin: 0 0 7px;
+  color: #2563eb;
+  font-weight: 600;
+}
+
+.instructor-details span {
+  color: #64748b;
+  font-size: 14px;
+}
+
+@media (max-width: 480px) {
+  .instructor-profile {
+    padding: 20px;
+  }
+
+  .instructor-card {
+    align-items: flex-start;
+    padding: 15px;
+  }
+}
