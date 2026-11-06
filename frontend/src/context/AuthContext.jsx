@@ -18,6 +18,7 @@ export const AuthProvider = ({ children }) => {
 
       try {
         const response = await fetch("http://localhost:5000/api/auth/me", {
+          cache: "no-store",
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -26,7 +27,7 @@ export const AuthProvider = ({ children }) => {
         const data = await response.json();
 
         if (response.ok && data.success) {
-          setUser(data.user);
+          setUser(data.data);
         } else {
           localStorage.removeItem("token");
           setToken(null);

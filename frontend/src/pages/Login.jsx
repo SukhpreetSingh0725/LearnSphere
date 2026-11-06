@@ -51,11 +51,13 @@ function Login() {
         return;
       }
 
-      login(data.user, data.token);
+      const user = data.data;
 
-      if (data.user.role === "admin") {
+      login(user, data.token);
+
+      if (user.role === "admin") {
         navigate("/admin/dashboard");
-      } else if (data.user.role === "instructor") {
+      } else if (user.role === "instructor") {
         navigate("/instructor/dashboard");
       } else {
         navigate("/student/dashboard");
