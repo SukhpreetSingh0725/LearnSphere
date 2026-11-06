@@ -4,6 +4,7 @@ import {
   Routes,
   Route,
   Navigate,
+  useNavigate,
 } from "react-router-dom";
 
 import "./App.css";
@@ -13,6 +14,7 @@ import Signup from "./pages/Signup";
 import Unauthorized from "./pages/Unauthorized";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { useAuth } from "./context/AuthContext";
+import CourseDetails from "./pages/CourseDetails";
 
 // Temporary dashboards — we'll build their actual features later.
 function Dashboard({ role }) {
@@ -39,6 +41,7 @@ function Dashboard({ role }) {
 
 // Existing LearnSphere homepage
 function Home() {
+  const navigate = useNavigate();
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -131,9 +134,14 @@ function Home() {
         <div className="course-grid">
           {filteredCourses.length > 0 ? (
             filteredCourses.map((course) => (
-              <div className="course-card" key={course.id}>
+                <div className="course-card" key={course._id || course.id}>
                 <h3>{course.title}</h3>
-                <p>Instructor: {course.instructor}</p>
+                <p>Instructor: {
+                typeof course.instructor === "object"
+                      ? course.instructor?.name || "LearnSphere Instructor"
+                      : course.instructor || "LearnSphere Instructor"
+                  }
+                  </p>
                 <span className="category-badge">
                   {course.category}
                 </span>
@@ -143,9 +151,7 @@ function Home() {
 
                 <button
                   className="view-course-btn"
-                  onClick={() =>
-                    alert(`You selected: ${course.title}`)
-                  }
+                  onClick={() => navigate(`/courses/${course._id || course.id}`)}
                 >
                   View Course
                 </button>
@@ -184,6 +190,7 @@ function App() {
     <Routes>
       {/* Public routes */}
       <Route path="/" element={<Home />} />
+      <Route path="/courses/:id" element={<CourseDetails />} />
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
       <Route path="/unauthorized" element={<Unauthorized />} />
