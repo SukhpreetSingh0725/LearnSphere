@@ -15,6 +15,7 @@ import Unauthorized from "./pages/Unauthorized";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { useAuth } from "./context/AuthContext";
 import CourseDetails from "./pages/CourseDetails";
+import InstructorDashboard from "./pages/InstructorDashboard";
 
 // Temporary dashboards — we'll build their actual features later.
 function Dashboard({ role }) {
@@ -203,13 +204,12 @@ function App() {
         />
       </Route>
 
-      {/* Instructor routes */}
       <Route element={<ProtectedRoute allowedRoles={["instructor"]} />}>
-        <Route
-          path="/instructor/dashboard"
-          element={<Dashboard role="Instructor" />}
-        />
-      </Route>
+  <Route
+    path="/instructor/dashboard"
+    element={<InstructorDashboard />}
+  />
+</Route>
 
       {/* Admin routes */}
       <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>
