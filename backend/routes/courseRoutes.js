@@ -7,7 +7,9 @@ const { createCourse,
         submitCourse,
         getPendingCourses,
         approveCourse,
-        rejectCourse
+        rejectCourse,
+        getPublishedCourses,
+        getPublishedCourseById
 } = require("../controllers/courseController");
 
 const { protect } = require("../middleware/authMiddleware");
@@ -31,6 +33,12 @@ router.get(
     getPendingCourses
 );
 
+// Get all published courses (Public)
+router.get("/", getPublishedCourses);
+
+// Get single published course (Public)
+router.get("/:id", getPublishedCourseById);
+
 // Approve course (Admin only)
 router.patch(
     "/admin/:id/approve",
@@ -46,6 +54,7 @@ router.patch(
     authorizeRoles("admin"),
     rejectCourse
 );
+
 
 // Submit course for admin approval
 router.patch(
@@ -78,5 +87,7 @@ router.post(
     authorizeRoles("instructor", "admin"),
     createCourse
 );
+
+
 
 module.exports = router;

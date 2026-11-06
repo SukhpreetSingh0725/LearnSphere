@@ -313,6 +313,60 @@ const rejectCourse = async (req, res) => {
         });
     }
 };
+// GET ALL PUBLISHED COURSES (PUBLIC)
+const getPublishedCourses = async (req, res) => {
+    try {
+        const courses = await Course.find({
+            status: "published"
+        })
+        .populate("instructor", "name")
+        .sort({ createdAt: -1 });
+
+        res.status(200).json({
+            success: true,
+            total: courses.length,
+            data: courses
+        });
+
+    } catch (error) {
+        console.error("Get published courses error:", error.message);
+
+        res.status(500).json({
+            success: false,
+            message: "Unable to fetch courses"
+        });
+    }
+};
+
+// GET SINGLE PUBLISHED COURSE (PUBLIC)
+const getPublishedCourseById = async (req, res) => {
+    try {
+        const course = await Course.findOne({
+            _id: req.params.id,
+            status: "published"
+        }).populate("instructor", "name");
+
+        if (!course) {
+            return res.status(404).json({
+                success: false,
+                message: "Course not found"
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            data: course
+        });
+
+    } catch (error) {
+        console.error("Get course details error:", error.message);
+
+        res.status(500).json({
+            success: false,
+            message: "Unable to fetch course details"
+        });
+    }
+};
 
 module.exports = {
     createCourse,
@@ -322,5 +376,7 @@ module.exports = {
     submitCourse,
     getPendingCourses,
     approveCourse,
-    rejectCourse
+    rejectCourse,
+    getPublishedCourses,
+    getPublishedCourseById
 };
