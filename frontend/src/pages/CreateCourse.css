@@ -1,0 +1,121 @@
+.create-course-page {
+    max-width: 900px;
+    width: 100%;
+  }
+  
+  .create-course-header {
+    margin-bottom: 25px;
+  }
+  
+  .create-course-header h2 {
+    font-size: 23px;
+    color: #0f172a;
+    margin: 0 0 7px;
+  }
+  
+  .create-course-header p {
+    color: #64748b;
+    font-size: 14px;
+    margin: 0;
+  }
+  
+  .create-course-message {
+    padding: 12px 15px;
+    border-radius: 8px;
+    font-size: 14px;
+    margin-bottom: 20px;
+  }
+  
+  .create-course-message.success {
+    background: #dcfce7;
+    color: #166534;
+  }
+  
+  .create-course-message.error {
+    background: #fee2e2;
+    color: #991b1b;
+  }
+  
+  .create-course-form {
+    background: white;
+    padding: 30px;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+  }
+  
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+    margin-bottom: 20px;
+  }
+  
+  .form-group label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #334155;
+  }
+  
+  .form-group input,
+  .form-group textarea,
+  .form-group select {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: inherit;
+    color: #1e293b;
+    outline: none;
+    background: white;
+  }
+  
+  .form-group input:focus,
+  .form-group textarea:focus,
+  .form-group select:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px #dbeafe;
+  }
+  
+  .form-group textarea {
+    resize: vertical;
+    min-height: 120px;
+  }
+  
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+  
+  .submit-course-form-btn {
+    background: #2563eb;
+    color: white;
+    border: none;
+    padding: 13px 22px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  
+  .submit-course-form-btn:hover {
+    background: #1d4ed8;
+  }
+  
+  .submit-course-form-btn:disabled {
+    background: #94a3b8;
+    cursor: not-allowed;
+  }
+  
+  @media (max-width: 650px) {
+    .create-course-form {
+      padding: 20px;
+    }
+  
+    .form-row {
+      grid-template-columns: 1fr;
+      gap: 0;
+    }
+  }
+  
