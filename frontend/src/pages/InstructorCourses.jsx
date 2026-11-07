@@ -41,6 +41,85 @@ function InstructorCourses() {
     }
   }, [token]);
 
+  
+const handleSubmitForApproval = async (courseId) => {
+  const confirmSubmit = window.confirm(
+    "Are you sure you want to submit this course for approval?"
+  );
+
+  if (!confirmSubmit) return;
+
+  try {
+    const response = await fetch(
+      `http://localhost:5000/api/courses/${courseId}/submit`,
+      {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    const result = await response.json();
+
+    if (response.ok && result.success) {
+      setCourses((previousCourses) =>
+        previousCourses.map((course) =>
+          course._id === courseId
+            ? { ...course, status: "pending" }
+            : course
+        )
+      );
+
+      alert("Course submitted for approval successfully!");
+    } else {
+      alert(result.message || "Unable to submit course.");
+    }
+  } catch (error) {
+    console.error("Submit course error:", error);
+    alert("Unable to connect to the server.");
+  }
+};
+
+
+
+const handleDeleteCourse = async (courseId) => {
+  const confirmDelete = window.confirm(
+    "Are you sure you want to delete this course? This action cannot be undone."
+  );
+
+  if (!confirmDelete) return;
+
+  try {
+    const response = await fetch(
+      `http://localhost:5000/api/courses/${courseId}`,
+      {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    const result = await response.json();
+
+    if (response.ok && result.success) {
+      setCourses((previousCourses) =>
+        previousCourses.filter((course) => course._id !== courseId)
+      );
+
+      alert("Course deleted successfully!");
+    } else {
+      alert(result.message || "Unable to delete course.");
+    }
+  } catch (error) {
+    console.error("Delete course error:", error);
+    alert("Unable to connect to the server.");
+  }
+};
+
+
+
   return (
     <div className="instructor-courses">
 
@@ -122,15 +201,23 @@ function InstructorCourses() {
 
                   <div className="course-card-actions">
                     <button type="button">Edit</button>
-                    <button type="button" className="delete-course-btn">
+                    <button
+                      type="button"
+                      className="delete-course-btn"
+                      onClick={() => handleDeleteCourse(course._id)}
+                    >
                       Delete
                     </button>
 
                     {course.status === "draft" && (
-                      <button type="button" className="submit-course-btn">
+                      <button
+                        type="button"
+                        className="submit-course-btn"
+                        onClick={() => handleSubmitForApproval(course._id)}
+                      >
                         Submit for Approval
                       </button>
-                    )}
+                          )}
                   </div>
 
                 </div>
