@@ -139,10 +139,10 @@ const deleteCourse = async (req, res) => {
         }
 
         // Allow deletion only for draft or rejected courses
-        if (!["draft", "rejected"].includes(course.status)) {
+        if (!["draft", "pending", "rejected"].includes(course.status)) {
             return res.status(400).json({
                 success: false,
-                message: "Only draft or rejected courses can be deleted"
+                message: "Only draft, pending, or rejected courses can be deleted"
             });
         }
 
