@@ -5,6 +5,7 @@ import { useAuth } from "../context/AuthContext";
 function InstructorCourses() {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [editingCourse, setEditingCourse] = useState(null);
   const { token } = useAuth();
 
   useEffect(() => {
@@ -118,6 +119,74 @@ const handleDeleteCourse = async (courseId) => {
   }
 };
 
+const handleEditCourse = (course) => {
+  setEditingCourse({
+    ...course,
+    price: String(course.price),
+  });
+};
+
+
+const handleUpdateCourse = async () => {
+  if (!editingCourse.title.trim()) {
+    alert("Please enter the course title.");
+    return;
+  }
+  
+  if (!editingCourse.category.trim()) {
+    alert("Please enter the course category.");
+    return;
+  }
+  
+  if (!editingCourse.description.trim()) {
+    alert("Please enter the course description.");
+    return;
+  }
+  
+  if (editingCourse.price === "" || Number(editingCourse.price) < 0) {
+    alert("Please enter a valid course price.");
+    return;
+  }
+  try {
+    const response = await fetch(
+      `http://localhost:5000/api/courses/${editingCourse._id}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          title: editingCourse.title,
+          category: editingCourse.category,
+          description: editingCourse.description,
+          level: editingCourse.level,
+          price: Number(editingCourse.price),
+        }),
+      }
+    );
+
+    const result = await response.json();
+
+    if (response.ok && result.success) {
+      setCourses((previousCourses) =>
+        previousCourses.map((course) =>
+          course._id === editingCourse._id
+            ? { ...course, ...editingCourse, price: Number(editingCourse.price) }
+            : course
+        )
+      );
+
+      setEditingCourse(null);
+      alert("Course updated successfully!");
+    } else {
+      alert(result.message || "Unable to update course.");
+    }
+  } catch (error) {
+    console.error("Update course error:", error);
+    alert("Unable to connect to the server.");
+  }
+};
 
 
   return (
@@ -164,6 +233,105 @@ const handleDeleteCourse = async (courseId) => {
 
       <div className="courses-list-section">
         <h3>All Courses</h3>
+        {editingCourse && (
+        <div className="edit-course-form">
+          <h3>Edit Course</h3>
+
+          <div className="form-group">
+            <label>Course Title</label>
+            <input
+              type="text"
+              required
+              value={editingCourse.title}
+              onChange={(e) =>
+                setEditingCourse({
+                  ...editingCourse,
+                  title: e.target.value,
+                })
+              }
+            />
+          </div>
+
+          <div className="form-group">
+            <label>Category</label>
+            <input
+              type="text"
+              required
+              value={editingCourse.category}
+              onChange={(e) =>
+                setEditingCourse({
+                  ...editingCourse,
+                  category: e.target.value,
+                })
+              }
+            />
+          </div>
+
+          <div className="form-group">
+            <label>Description</label>
+            <textarea
+            required
+              value={editingCourse.description}
+              onChange={(e) =>
+                setEditingCourse({
+                  ...editingCourse,
+                  description: e.target.value,
+                })
+              }
+            />
+          </div>
+
+          <div className="form-group">
+            <label>Difficulty Level</label>
+            <select
+            required
+              value={editingCourse.level}
+              onChange={(e) =>
+                setEditingCourse({
+                  ...editingCourse,
+                  level: e.target.value,
+                })
+              }
+            >
+              <option value="Beginner">Beginner</option>
+              <option value="Intermediate">Intermediate</option>
+              <option value="Advanced">Advanced</option>
+            </select>
+          </div>
+
+          <div className="form-group">
+            <label>Price (₹)</label>
+            <input
+              type="number"
+              required
+              min="0"
+              value={editingCourse.price}
+              onChange={(e) =>
+                setEditingCourse({
+                  ...editingCourse,
+                  price: e.target.value,
+                })
+              }
+            />
+          </div>
+
+          <div className="edit-course-actions">
+          <button
+            type="button"
+            onClick={handleUpdateCourse}
+          >
+            Save Changes
+          </button>
+
+            <button
+              type="button"
+              onClick={() => setEditingCourse(null)}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
 
         {loading ? (
           <p>Loading courses...</p>
@@ -200,7 +368,12 @@ const handleDeleteCourse = async (courseId) => {
                   </div>
 
                   <div className="course-card-actions">
-                    <button type="button">Edit</button>
+                  <button
+                    type="button"
+                    onClick={() => handleEditCourse(course)}
+                  >
+                    Edit
+                  </button>
                     <button
                       type="button"
                       className="delete-course-btn"
