@@ -1,5 +1,6 @@
 import { useState } from "react";
 import "./InstructorDashboard.css";
+import InstructorCourses from "./InstructorCourses";
 
 function InstructorDashboard() {
   const [activeTab, setActiveTab] = useState("Overview");
@@ -104,12 +105,14 @@ function InstructorDashboard() {
           </section>
         )}
 
-        {activeTab !== "Overview" && (
-          <section className="instructor-placeholder">
-            <h2>{activeTab}</h2>
-            <p>This section will be developed next.</p>
-          </section>
-        )}
+          {activeTab === "My Courses" && <InstructorCourses />}
+
+          {activeTab !== "Overview" && activeTab !== "My Courses" && (
+            <section className="instructor-placeholder">
+              <h2>{activeTab}</h2>
+              <p>This section will be developed next.</p>
+            </section>
+          )}
 
       </main>
     </div>
