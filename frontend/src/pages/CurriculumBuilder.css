@@ -1,0 +1,182 @@
+
+.curriculum-builder {
+    padding: 25px;
+  }
+  
+  .curriculum-builder h2 {
+    font-size: 25px;
+    margin-bottom: 8px;
+    color: #1e293b;
+  }
+  
+  .curriculum-builder > p {
+    color: #64748b;
+    margin-bottom: 25px;
+  }
+  
+  .curriculum-course-select {
+    max-width: 500px;
+    margin-bottom: 25px;
+  }
+  
+  .curriculum-course-select label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #334155;
+  }
+  
+  .curriculum-course-select select,
+  .add-section-form input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font-size: 14px;
+    outline: none;
+  }
+  
+  .curriculum-course-select select:focus,
+  .add-section-form input:focus {
+    border-color: #2563eb;
+  }
+  
+  .curriculum-sections {
+    margin-top: 30px;
+  }
+  
+  .curriculum-sections h3 {
+    font-size: 20px;
+    margin-bottom: 15px;
+    color: #1e293b;
+  }
+  
+  .add-section-form {
+    display: flex;
+    gap: 12px;
+    max-width: 650px;
+    margin-bottom: 25px;
+  }
+  
+  .add-section-form button {
+    padding: 12px 20px;
+    border: none;
+    border-radius: 8px;
+    background: #2563eb;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  
+  .add-section-form button:hover {
+    background: #1d4ed8;
+  }
+  
+  .add-section-form button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+  
+  .curriculum-section {
+    padding: 18px;
+    margin-bottom: 12px;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+  }
+  
+  .curriculum-section h4 {
+    color: #1e293b;
+    margin-bottom: 6px;
+  }
+  
+  .curriculum-section p {
+    color: #64748b;
+    font-size: 13px;
+  }
+  
+  .curriculum-error {
+    color: #dc2626;
+    margin: 12px 0;
+  }
+  
+  @media (max-width: 600px) {
+    .add-section-form {
+      flex-direction: column;
+    }
+  }
+
+
+  
+.section-lessons {
+    margin-top: 18px;
+    border-top: 1px solid #e2e8f0;
+    padding-top: 12px;
+  }
+  
+  .curriculum-lesson {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    background: #f8fafc;
+    border-radius: 7px;
+    color: #334155;
+    font-size: 14px;
+  }
+  
+  .curriculum-lesson small {
+    color: #64748b;
+    text-transform: capitalize;
+    background: #e2e8f0;
+    padding: 4px 9px;
+    border-radius: 12px;
+  }
+  
+  .add-lesson-form {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+  }
+  
+  .add-lesson-form input {
+    flex: 1;
+    min-width: 0;
+    padding: 10px 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 7px;
+    outline: none;
+  }
+  
+  .add-lesson-form input:focus {
+    border-color: #2563eb;
+  }
+  
+  .add-lesson-form button {
+    padding: 10px 16px;
+    border: none;
+    border-radius: 7px;
+    background: #0f766e;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  
+  .add-lesson-form button:hover {
+    background: #115e59;
+  }
+  
+  .add-lesson-form button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+  
+  @media (max-width: 600px) {
+    .add-lesson-form {
+      flex-direction: column;
+    }
+  }
+  
+  
