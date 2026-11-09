@@ -17,6 +17,8 @@ function CurriculumBuilder() {
   const [creatingLesson, setCreatingLesson] = useState(false);
   const [editingLesson, setEditingLesson] = useState(null);
 const [editedLessonTitle, setEditedLessonTitle] = useState("");
+const [editingSection, setEditingSection] = useState(null);
+const [editedSectionTitle, setEditedSectionTitle] = useState("");
 
   useEffect(() => {
     const fetchCourses = async () => {
@@ -237,6 +239,76 @@ const [editedLessonTitle, setEditedLessonTitle] = useState("");
     }
   };
 
+  const handleUpdateSection = async (sectionId) => {
+    if (!editedSectionTitle.trim()) {
+      setError("Section title cannot be empty");
+      return;
+    }
+  
+    setError("");
+  
+    try {
+      const response = await fetch(
+        `http://localhost:5000/api/sections/${sectionId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            title: editedSectionTitle,
+          }),
+        }
+      );
+  
+      const data = await response.json();
+  
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to update section");
+      }
+  
+      setEditingSection(null);
+      setEditedSectionTitle("");
+  
+      await fetchCurriculum(selectedCourse);
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const handleDeleteSection = async (sectionId) => {
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this section? All lessons inside it will also be deleted."
+    );
+  
+    if (!confirmed) return;
+  
+    setError("");
+  
+    try {
+      const response = await fetch(
+        `http://localhost:5000/api/sections/${sectionId}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+  
+      const data = await response.json();
+  
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to delete section");
+      }
+  
+      await fetchCurriculum(selectedCourse);
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
   const handleCourseChange = (e) => {
     const courseId = e.target.value;
     setSelectedCourse(courseId);
@@ -292,9 +364,57 @@ const [editedLessonTitle, setEditedLessonTitle] = useState("");
           ) : (
             sections.map((section) => (
                 <div className="curriculum-section" key={section._id}>
-                <h4>{section.title}</h4>
-              
-                <p>{section.lessons?.length || 0} lessons</p>
+                <div className="section-header">
+                <div>
+                {editingSection === section._id ? (
+                  <div className="edit-section-form">
+                    <input
+                      type="text"
+                      value={editedSectionTitle}
+                      onChange={(e) => setEditedSectionTitle(e.target.value)}
+                    />
+
+                    <button
+                      type="button"
+                      onClick={() => handleUpdateSection(section._id)}
+                    >
+                      Save
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setEditingSection(null)}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                ) : (
+                  <h4>{section.title}</h4>
+                )}
+                  <p>{section.lessons?.length || 0} lessons</p>
+                </div>
+
+                <div className="section-actions">
+                <button
+                  type="button"
+                  className="edit-section-btn"
+                  onClick={() => {
+                    setEditingSection(section._id);
+                    setEditedSectionTitle(section.title);
+                  }}
+                >
+                  Edit
+                </button>
+
+                <button
+                  type="button"
+                  className="delete-section-btn"
+                  onClick={() => handleDeleteSection(section._id)}
+                >
+                  Delete
+                </button>
+                </div>
+              </div>
               
                 <div className="section-lessons">
                   {section.lessons?.map((lesson) => (
