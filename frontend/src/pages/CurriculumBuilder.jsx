@@ -15,6 +15,8 @@ function CurriculumBuilder() {
   const [creatingSection, setCreatingSection] = useState(false);
   const [lessonInputs, setLessonInputs] = useState({});
   const [creatingLesson, setCreatingLesson] = useState(false);
+  const [editingLesson, setEditingLesson] = useState(null);
+const [editedLessonTitle, setEditedLessonTitle] = useState("");
 
   useEffect(() => {
     const fetchCourses = async () => {
@@ -165,6 +167,76 @@ function CurriculumBuilder() {
     }
   };
 
+  const handleUpdateLesson = async (lessonId) => {
+    if (!editedLessonTitle.trim()) {
+      setError("Lesson title cannot be empty");
+      return;
+    }
+  
+    setError("");
+  
+    try {
+      const response = await fetch(
+        `http://localhost:5000/api/lessons/${lessonId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            title: editedLessonTitle,
+          }),
+        }
+      );
+  
+      const data = await response.json();
+  
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to update lesson");
+      }
+  
+      setEditingLesson(null);
+      setEditedLessonTitle("");
+  
+      await fetchCurriculum(selectedCourse);
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const handleDeleteLesson = async (lessonId) => {
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this lesson?"
+    );
+  
+    if (!confirmed) return;
+  
+    setError("");
+  
+    try {
+      const response = await fetch(
+        `http://localhost:5000/api/lessons/${lessonId}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+  
+      const data = await response.json();
+  
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to delete lesson");
+      }
+  
+      await fetchCurriculum(selectedCourse);
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
   const handleCourseChange = (e) => {
     const courseId = e.target.value;
     setSelectedCourse(courseId);
@@ -227,9 +299,56 @@ function CurriculumBuilder() {
                 <div className="section-lessons">
                   {section.lessons?.map((lesson) => (
                     <div className="curriculum-lesson" key={lesson._id}>
-                      <span>{lesson.title}</span>
+                    <div className="lesson-info">
+                    {editingLesson === lesson._id ? (
+                    <div className="edit-lesson-form">
+                      <input
+                        type="text"
+                        value={editedLessonTitle}
+                        onChange={(e) => setEditedLessonTitle(e.target.value)}
+                      />
+
+                      <button
+                        type="button"
+                        onClick={() => handleUpdateLesson(lesson._id)}
+                      >
+                        Save
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setEditingLesson(null)}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  ) : (
+                    <span>{lesson.title}</span>
+                  )}
                       <small>{lesson.type}</small>
                     </div>
+                  
+                    <div className="lesson-actions">
+                    <button
+                      type="button"
+                      className="edit-lesson-btn"
+                      onClick={() => {
+                        setEditingLesson(lesson._id);
+                        setEditedLessonTitle(lesson.title);
+                      }}
+                    >
+                      Edit
+                    </button>
+                  
+                    <button
+                      type="button"
+                      className="delete-lesson-btn"
+                      onClick={() => handleDeleteLesson(lesson._id)}
+                    >
+                      Delete
+                    </button>
+                    </div>
+                  </div>
                   ))}
                 </div>
               
