@@ -3,6 +3,7 @@ import "./InstructorDashboard.css";
 import InstructorCourses from "./InstructorCourses";
 import CreateCourse from "./CreateCourse";
 import CurriculumBuilder from "./CurriculumBuilder";
+import Students from "./Students";
 
 function InstructorDashboard() {
   const [activeTab, setActiveTab] = useState("Overview");
@@ -111,8 +112,10 @@ function InstructorDashboard() {
           {activeTab === "My Courses" && <InstructorCourses />}
           {activeTab === "Create Course" && <CreateCourse />}
           {activeTab === "Curriculum Builder" && <CurriculumBuilder />}
+          {activeTab === "Students" && <Students />}
 
-          {activeTab !== "Overview" && activeTab !== "My Courses" &&  activeTab !== "Create Course" && activeTab !== "Curriculum Builder" &&(
+          {activeTab !== "Overview" && activeTab !== "My Courses" &&  activeTab !== "Create Course" 
+          && activeTab !== "Curriculum Builder" && activeTab !== "Students" &&(
             <section className="instructor-placeholder">
               <h2>{activeTab}</h2>
               <p>This section will be developed next.</p>
