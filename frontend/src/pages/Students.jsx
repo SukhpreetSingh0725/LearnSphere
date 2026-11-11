@@ -10,6 +10,8 @@ function Students() {
   const [selectedCourse, setSelectedCourse] = useState("all");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [students, setStudents] = useState([]);
+  const [studentsLoading, setStudentsLoading] = useState(true);
 
 
   useEffect(() => {
@@ -46,6 +48,41 @@ function Students() {
       fetchCourses();
     }
   }, [token]);
+
+  useEffect(() => {
+    const fetchStudents = async () => {
+      try {
+        setStudentsLoading(true);
+  
+        const response = await fetch(
+          "http://localhost:5000/api/enrollments/instructor/students",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+            cache: "no-store",
+          }
+        );
+  
+        const data = await response.json();
+  
+        if (!response.ok) {
+          throw new Error(data.message || "Failed to fetch students");
+        }
+  
+        setStudents(data.data || []);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setStudentsLoading(false);
+      }
+    };
+  
+    if (token) {
+      fetchStudents();
+    }
+  }, [token]);
+
 
   return (
     <div className="students-page">
@@ -112,14 +149,67 @@ function Students() {
             </thead>
 
             <tbody>
-              <tr>
-                <td colSpan="5" className="students-empty-cell">
-                  {loading
-                    ? "Loading students..."
-                    : "No students enrolled yet."}
-                </td>
-              </tr>
-            </tbody>
+                {studentsLoading ? (
+                  <tr>
+                    <td colSpan="5" className="students-empty-cell">
+                      Loading students...
+                    </td>
+                  </tr>
+                ) : students.filter((enrollment) => {
+                    const studentName = enrollment.student?.name || "";
+                    const studentEmail = enrollment.student?.email || "";
+                    const courseTitle = enrollment.course?.title || "";
+
+                    const matchesSearch =
+                      studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                      studentEmail.toLowerCase().includes(searchTerm.toLowerCase());
+
+                    const matchesCourse =
+                      selectedCourse === "all" ||
+                      enrollment.course?._id === selectedCourse;
+
+                    return matchesSearch && matchesCourse;
+                  }).length === 0 ? (
+                  <tr>
+                    <td colSpan="5" className="students-empty-cell">
+                      No students found.
+                    </td>
+                  </tr>
+                ) : (
+                  students
+                    .filter((enrollment) => {
+                      const studentName = enrollment.student?.name || "";
+                      const studentEmail = enrollment.student?.email || "";
+
+                      const matchesSearch =
+                        studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        studentEmail.toLowerCase().includes(searchTerm.toLowerCase());
+
+                      const matchesCourse =
+                        selectedCourse === "all" ||
+                        enrollment.course?._id === selectedCourse;
+
+                      return matchesSearch && matchesCourse;
+                    })
+                    .map((enrollment) => (
+                      <tr key={enrollment._id}>
+                        <td>{enrollment.student?.name || "Unknown Student"}</td>
+                        <td>{enrollment.student?.email || "N/A"}</td>
+                        <td>{enrollment.course?.title || "Unknown Course"}</td>
+                        <td>
+                          {enrollment.enrolledAt
+                            ? new Date(enrollment.enrolledAt).toLocaleDateString()
+                            : "N/A"}
+                        </td>
+                        <td>
+                          <span className="enrollment-status">
+                            {enrollment.status}
+                          </span>
+                        </td>
+                      </tr>
+                    ))
+                )}
+              </tbody>
           </table>
         </div>
       </div>
