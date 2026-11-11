@@ -116,3 +116,50 @@
   .students-course-filter:focus {
     border-color: #2563eb;
   }
+
+  .students-error {
+    color: #dc2626;
+    margin: 12px 0;
+    font-size: 14px;
+  }
+
+.students-table-container {
+  width: 100%;
+  overflow-x: auto;
+  margin-top: 15px;
+}
+
+.students-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.students-table th {
+  background: #f8fafc;
+  color: #475569;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 15px;
+  border-bottom: 1px solid #e2e8f0;
+  white-space: nowrap;
+}
+
+.students-table td {
+  padding: 16px 15px;
+  color: #334155;
+  font-size: 14px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.students-empty-cell {
+  text-align: center;
+  padding: 45px 15px !important;
+  color: #64748b !important;
+}
+
+@media (max-width: 768px) {
+  .students-table {
+    min-width: 700px;
+  }
+}
