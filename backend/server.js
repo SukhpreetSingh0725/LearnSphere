@@ -1,21 +1,26 @@
+
 require("dotenv").config();
 
 const express = require("express");
 const cors = require("cors");
 const connectDB = require("./config/db");
+
 const authRoutes = require("./routes/authRoutes");
 const courseRoutes = require("./routes/courseRoutes");
 const curriculumRoutes = require("./routes/curriculumRoutes");
 const enrollmentRoutes = require("./routes/enrollmentRoutes");
+const adminRoutes = require("./routes/adminRoutes");
+
 const app = express();
 
 app.use(cors());
 app.use(express.json());
+
 app.use("/api/auth", authRoutes);
 app.use("/api/courses", courseRoutes);
 app.use("/api", curriculumRoutes);
 app.use("/api/enrollments", enrollmentRoutes);
-
+app.use("/api/admin", adminRoutes);
 
 app.get("/", (req, res) => {
     res.send("Welcome to LearnSphere API!");
