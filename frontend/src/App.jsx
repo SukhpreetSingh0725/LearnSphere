@@ -17,6 +17,7 @@ import { useAuth } from "./context/AuthContext";
 import CourseDetails from "./pages/CourseDetails";
 import InstructorDashboard from "./pages/InstructorDashboard";
 import StudentDashboard from "./pages/StudentDashboard";
+import AdminDashboard from "./pages/AdminDashboard";
 
 // Temporary dashboards — we'll build their actual features later.
 function Dashboard({ role }) {
@@ -212,12 +213,12 @@ function App() {
       </Route>
 
       {/* Admin routes */}
-      <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>
-        <Route
-          path="/admin/dashboard"
-          element={<Dashboard role="Admin" />}
-        />
-      </Route>
+<Route element={<ProtectedRoute allowedRoles={["admin"]} />}>
+  <Route
+    path="/admin/dashboard"
+    element={<AdminDashboard />}
+  />
+</Route>
 
       {/* Unknown routes */}
       <Route path="*" element={<Navigate to="/" replace />} />
