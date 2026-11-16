@@ -1,0 +1,33 @@
+.enrollment-badge {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.enrollment-badge.active {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.enrollment-badge.completed {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.enrollment-badge.cancelled,
+.enrollment-badge.failed {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.enrollment-badge.pending {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.enrollment-badge.not_enrolled {
+  background: #e5e7eb;
+  color: #374151;
+}

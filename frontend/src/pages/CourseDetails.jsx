@@ -1,4 +1,5 @@
 import CourseCurriculum from "../components/CourseCurriculum";
+import EnrollButton from "../components/EnrollButton";
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import "./CourseDetails.css";
@@ -109,12 +110,7 @@ function CourseDetails() {
               <span>One-time course price</span>
             </div>
 
-            <button
-              className="enroll-btn"
-              onClick={() => alert("Enrollment and payment will be available soon!")}
-            >
-              Enroll Now
-            </button>
+            <EnrollButton course={course} />
 
             <p className="course-access-note">
               Start your learning journey with LearnSphere.

@@ -1,0 +1,64 @@
+.student-dashboard {
+  display: flex;
+  min-height: 80vh;
+  background: #f8fafc;
+}
+
+.student-sidebar {
+  width: 240px;
+  padding: 25px 15px;
+  background: white;
+  border-right: 1px solid #e5e7eb;
+}
+
+.student-sidebar h2 {
+  margin-bottom: 30px;
+  color: #2563eb;
+}
+
+.student-sidebar button {
+  display: block;
+  width: 100%;
+  padding: 13px;
+  margin-bottom: 10px;
+  border: none;
+  border-radius: 7px;
+  text-align: left;
+  background: transparent;
+  cursor: pointer;
+}
+
+.student-sidebar button.active {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.student-main {
+  flex: 1;
+  padding: 30px;
+  min-width: 0;
+}
+
+.student-main > div > button {
+  padding: 12px 20px;
+  border: none;
+  border-radius: 7px;
+  background: #2563eb;
+  color: white;
+  cursor: pointer;
+}
+
+@media (max-width: 650px) {
+  .student-dashboard {
+    flex-direction: column;
+  }
+
+  .student-sidebar {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .student-main {
+    padding: 15px;
+  }
+}
