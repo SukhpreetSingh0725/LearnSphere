@@ -1,0 +1,114 @@
+.instructor-settings {
+    padding: 25px;
+    background: #ffffff;
+    border-radius: 12px;
+    max-width: 850px;
+}
+
+.settings-header {
+    margin-bottom: 25px;
+}
+
+.settings-header h2 {
+    font-size: 24px;
+    color: #1f2937;
+    margin-bottom: 8px;
+}
+
+.settings-header p {
+    color: #6b7280;
+    font-size: 14px;
+}
+
+.settings-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.settings-field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.settings-field label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #374151;
+}
+
+.settings-field input,
+.settings-field textarea {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.2s;
+    box-sizing: border-box;
+}
+
+.settings-field input:focus,
+.settings-field textarea:focus {
+    border-color: #4f46e5;
+}
+
+.settings-field input:disabled {
+    background: #f3f4f6;
+    color: #6b7280;
+    cursor: not-allowed;
+}
+
+.settings-field textarea {
+    resize: vertical;
+}
+
+.settings-field small {
+    color: #9ca3af;
+    font-size: 12px;
+}
+
+.settings-form button {
+    align-self: flex-start;
+    padding: 12px 24px;
+    background: #4f46e5;
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.settings-form button:hover {
+    background: #4338ca;
+}
+
+.settings-form button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.settings-success {
+    color: #15803d;
+    font-size: 14px;
+}
+
+.settings-error {
+    color: #dc2626;
+    font-size: 14px;
+}
+
+@media (max-width: 600px) {
+    .instructor-settings {
+        padding: 16px;
+    }
+
+    .settings-header h2 {
+        font-size: 21px;
+    }
+}
