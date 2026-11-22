@@ -1,0 +1,185 @@
+
+.admin-users {
+    width: 100%;
+  }
+  
+  .admin-users-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 25px;
+  }
+  
+  .admin-users-heading h2 {
+    margin: 0 0 6px;
+    color: #172033;
+    font-size: 24px;
+  }
+  
+  .admin-users-heading p {
+    margin: 0;
+    color: #718096;
+    font-size: 14px;
+  }
+  
+  .admin-users-heading button {
+    background: #4f46e5;
+    color: white;
+    border: none;
+    padding: 11px 18px;
+    border-radius: 7px;
+    cursor: pointer;
+    font-weight: 600;
+  }
+  
+  .admin-users-heading button:hover {
+    background: #4338ca;
+  }
+  
+  .admin-user-filters {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 22px;
+  }
+  
+  .admin-user-filters input,
+  .admin-user-filters select {
+    padding: 11px 13px;
+    border: 1px solid #dce1e9;
+    border-radius: 7px;
+    background: white;
+    color: #273247;
+    font-size: 14px;
+    outline: none;
+  }
+  
+  .admin-user-filters input {
+    flex: 1;
+    min-width: 180px;
+  }
+  
+  .admin-user-filters input:focus,
+  .admin-user-filters select:focus {
+    border-color: #4f46e5;
+  }
+  
+  .admin-users-table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    background: white;
+    border: 1px solid #e5e9f0;
+    border-radius: 10px;
+  }
+  
+  .admin-users-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    min-width: 750px;
+  }
+  
+  .admin-users-table th {
+    background: #f8fafc;
+    color: #64748b;
+    padding: 15px;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  
+  .admin-users-table td {
+    padding: 16px 15px;
+    border-top: 1px solid #edf0f5;
+    color: #334155;
+    font-size: 14px;
+  }
+  
+  .user-role,
+  .user-status {
+    display: inline-block;
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: capitalize;
+  }
+  
+  .user-role.student {
+    background: #e0f2fe;
+    color: #0369a1;
+  }
+  
+  .user-role.instructor {
+    background: #ede9fe;
+    color: #6d28d9;
+  }
+  
+  .user-status.active {
+    background: #dcfce7;
+    color: #15803d;
+  }
+  
+  .user-status.inactive {
+    background: #fee2e2;
+    color: #b91c1c;
+  }
+  
+  .user-action {
+    padding: 8px 12px;
+    border: none;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  
+  .user-action.deactivate {
+    background: #fee2e2;
+    color: #b91c1c;
+  }
+  
+  .user-action.activate {
+    background: #dcfce7;
+    color: #15803d;
+  }
+  
+  .user-action:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+  
+  .admin-user-error {
+    color: #b91c1c;
+    margin-bottom: 15px;
+  }
+  
+  .admin-user-empty {
+    background: white;
+    padding: 30px;
+    text-align: center;
+    border-radius: 10px;
+    color: #64748b;
+  }
+  
+  .admin-users-count {
+    margin-top: 15px;
+    color: #64748b;
+    font-size: 13px;
+  }
+  
+  @media (max-width: 700px) {
+    .admin-users-heading {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+  
+    .admin-user-filters {
+      flex-direction: column;
+    }
+  
+    .admin-user-filters input {
+      min-width: 0;
+    }
+  }
+  
