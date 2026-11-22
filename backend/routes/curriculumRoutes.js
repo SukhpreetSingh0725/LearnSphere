@@ -4,6 +4,7 @@ const express = require("express");
 const {
     createSection,
     getCourseCurriculum,
+    getStudentCourseCurriculum,
     updateSection,
     deleteSection,
     createLesson,
@@ -79,6 +80,14 @@ router.delete(
     protect,
     authorizeRoles("instructor", "admin"),
     deleteLesson
+);
+
+// Get Course Curriculum for Enrolled Students
+router.get(
+    "/courses/:courseId/learn",
+    protect,
+    authorizeRoles("student"),
+    getStudentCourseCurriculum
 );
 
 module.exports = router;
