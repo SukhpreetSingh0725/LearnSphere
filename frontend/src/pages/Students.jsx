@@ -92,23 +92,35 @@ function Students() {
           <p>Manage and monitor students enrolled in your courses.</p>
         </div>
       </div>
+    
+        <div className="students-stats">
+          <div className="student-stat-card">
+            <h3>Total Students</h3>
+            <p>
+              {studentsLoading ? "..." : new Set(
+                students.map((enrollment) => enrollment.student?._id)
+                  .filter(Boolean)
+              ).size}
+            </p>
+          </div>
 
-      <div className="students-stats">
-        <div className="student-stat-card">
-          <h3>Total Students</h3>
-          <p>0</p>
-        </div>
+          <div className="student-stat-card">
+            <h3>Active Students</h3>
+            <p>
+              {studentsLoading ? "..." : new Set(
+                students
+                  .filter((enrollment) => enrollment.status === "active")
+                  .map((enrollment) => enrollment.student?._id)
+                  .filter(Boolean)
+              ).size}
+            </p>
+          </div>
 
-        <div className="student-stat-card">
-          <h3>Active Students</h3>
-          <p>0</p>
+          <div className="student-stat-card">
+            <h3>Total Courses</h3>
+            <p>{loading ? "..." : courses.length}</p>
+          </div>
         </div>
-
-        <div className="student-stat-card">
-          <h3>Total Courses</h3>
-          <p>0</p>
-        </div>
-      </div>
 
       <div className="students-content">
       <div className="students-toolbar">
@@ -158,7 +170,7 @@ function Students() {
                 ) : students.filter((enrollment) => {
                     const studentName = enrollment.student?.name || "";
                     const studentEmail = enrollment.student?.email || "";
-                    const courseTitle = enrollment.course?.title || "";
+                   
 
                     const matchesSearch =
                       studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
