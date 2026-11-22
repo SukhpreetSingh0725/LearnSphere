@@ -1,11 +1,49 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useAuth } from "../context/AuthContext";
 import "./InstructorDashboard.css";
 import InstructorCourses from "./InstructorCourses";
 import CreateCourse from "./CreateCourse";
 import CurriculumBuilder from "./CurriculumBuilder";
 import Students from "./Students";
+import InstructorAnalytics from "./InstructorAnalytics";
+import InstructorSettings from "./InstructorSettings";
 
 function InstructorDashboard() {
+  const { token } = useAuth();
+const [analytics, setAnalytics] = useState(null);
+
+useEffect(() => {
+  let ignore = false;
+
+  const fetchAnalytics = async () => {
+    try {
+      const response = await fetch(
+        "http://localhost:5000/api/instructor/analytics",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const data = await response.json();
+
+      if (response.ok && data.success && !ignore) {
+        setAnalytics(data.data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch instructor analytics:", error);
+    }
+  };
+
+  if (token) {
+    fetchAnalytics();
+  }
+
+  return () => {
+    ignore = true;
+  };
+}, [token]);
   const [activeTab, setActiveTab] = useState("Overview");
 
   const menuItems = [
@@ -74,22 +112,22 @@ function InstructorDashboard() {
 
               <div className="instructor-stat-card">
                 <span>Total Courses</span>
-                <h2>0</h2>
+                <h2>{analytics ? analytics.totalCourses : "..."}</h2>
               </div>
 
               <div className="instructor-stat-card">
                 <span>Total Students</span>
-                <h2>0</h2>
+                <h2>{analytics ? analytics.totalStudents : "..."}</h2>
               </div>
 
               <div className="instructor-stat-card">
                 <span>Published Courses</span>
-                <h2>0</h2>
+                <h2>{analytics ? analytics.publishedCourses : "..."}</h2>
               </div>
 
               <div className="instructor-stat-card">
                 <span>Pending Approval</span>
-                <h2>0</h2>
+                <h2>{analytics ? analytics.pendingCourses : "..."}</h2>
               </div>
 
             </div>
@@ -113,14 +151,8 @@ function InstructorDashboard() {
           {activeTab === "Create Course" && <CreateCourse />}
           {activeTab === "Curriculum Builder" && <CurriculumBuilder />}
           {activeTab === "Students" && <Students />}
-
-          {activeTab !== "Overview" && activeTab !== "My Courses" &&  activeTab !== "Create Course" 
-          && activeTab !== "Curriculum Builder" && activeTab !== "Students" &&(
-            <section className="instructor-placeholder">
-              <h2>{activeTab}</h2>
-              <p>This section will be developed next.</p>
-            </section>
-          )}
+          {activeTab === "Analytics" && <InstructorAnalytics />}
+          {activeTab === "Settings" && <InstructorSettings />}
 
       </main>
     </div>
