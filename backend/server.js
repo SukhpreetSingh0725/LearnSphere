@@ -1,4 +1,3 @@
-
 require("dotenv").config();
 
 const express = require("express");
@@ -13,6 +12,7 @@ const adminRoutes = require("./routes/adminRoutes");
 const adminUserRoutes = require("./routes/adminUserRoutes");
 const adminAnalyticsRoutes = require("./routes/adminAnalyticsRoutes");
 const instructorAnalyticsRoutes = require("./routes/instructorAnalyticsRoutes");
+const progressRoutes = require("./routes/progressRoutes");
 
 const app = express();
 
@@ -27,6 +27,7 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/admin/users", adminUserRoutes);
 app.use("/api/admin/analytics", adminAnalyticsRoutes);
 app.use("/api/instructor/analytics", instructorAnalyticsRoutes);
+app.use("/api/progress", progressRoutes);
 
 app.get("/", (req, res) => {
     res.send("Welcome to LearnSphere API!");
