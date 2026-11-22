@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import "./AdminDashboard.css";
 import AdminCourses from "./AdminCourses";
+import AdminUsers from "./AdminUsers";
 
 function AdminDashboard() {
   const { user, token, logout } = useAuth();
@@ -132,10 +133,15 @@ function AdminDashboard() {
             </section>
           )}
 
-          {activeTab !== "Overview" &&
-            activeTab !== "Course Management" && (
+            {activeTab === "User Management" && (
               <section className="admin-content">
-                <h2>{activeTab}</h2>
+                <AdminUsers />
+              </section>
+            )}
+
+            {activeTab === "Instructor Management" && (
+              <section className="admin-content">
+                <h2>Instructor Management</h2>
                 <p>This section will be implemented next.</p>
               </section>
             )}
