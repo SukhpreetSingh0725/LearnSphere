@@ -18,6 +18,7 @@ import CourseDetails from "./pages/CourseDetails";
 import InstructorDashboard from "./pages/InstructorDashboard";
 import StudentDashboard from "./pages/StudentDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
+import CoursePlayer from "./pages/CoursePlayer";
 
 // Temporary dashboards — we'll build their actual features later.
 function Dashboard({ role }) {
@@ -202,6 +203,11 @@ function App() {
       <Route element={<ProtectedRoute allowedRoles={["student"]} />}>
         <Route path="/student/dashboard"
          element={<StudentDashboard />}
+        />
+        
+          <Route
+            path="/learn/:courseId"
+            element={<CoursePlayer />}
           />
       </Route>
 
