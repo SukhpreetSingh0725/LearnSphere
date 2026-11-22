@@ -3,6 +3,7 @@ import { useAuth } from "../context/AuthContext";
 import "./AdminDashboard.css";
 import AdminCourses from "./AdminCourses";
 import AdminUsers from "./AdminUsers";
+import AdminAnalytics from "./AdminAnalytics";
 
 function AdminDashboard() {
   const { user, token, logout } = useAuth();
@@ -48,6 +49,7 @@ function AdminDashboard() {
     "Course Management",
     "User Management",
     "Instructor Management",
+    "Analytics",
   ];
 
   return (
@@ -145,6 +147,12 @@ function AdminDashboard() {
                 <p>This section will be implemented next.</p>
               </section>
             )}
+              {activeTab === "Analytics" && (
+                <section className="admin-content">
+                  <AdminAnalytics />
+                </section>
+              )}
+
       </main>
     </div>
   );
