@@ -187,7 +187,9 @@ const getMe = async (req, res) => {
                 id: req.user._id,
                 name: req.user.name,
                 email: req.user.email,
-                role: req.user.role
+                role: req.user.role,
+                bio: req.user.bio,
+                profileImage: req.user.profileImage
             }
         });
 
@@ -200,8 +202,87 @@ const getMe = async (req, res) => {
 };
 
 
+
+const updateProfile = async (req, res) => {
+    try {
+        const { name, bio, profileImage } = req.body;
+
+        const updates = {};
+
+        if (name !== undefined) {
+            if (typeof name !== "string" || name.trim().length < 2 || name.trim().length > 50) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Name must contain 2 to 50 characters"
+                });
+            }
+
+            updates.name = name.trim();
+        }
+
+        if (bio !== undefined) {
+            if (typeof bio !== "string" || bio.length > 500) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Bio must not exceed 500 characters"
+                });
+            }
+
+            updates.bio = bio.trim();
+        }
+
+        if (profileImage !== undefined) {
+            if (typeof profileImage !== "string" || profileImage.length > 1000) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Invalid profile image URL"
+                });
+            }
+
+            updates.profileImage = profileImage.trim();
+        }
+
+        if (Object.keys(updates).length === 0) {
+            return res.status(400).json({
+                success: false,
+                message: "No profile changes provided"
+            });
+        }
+
+        const user = await User.findByIdAndUpdate(
+            req.user._id,
+            { $set: updates },
+            { new: true, runValidators: true }
+        ).select("-passwordHash");
+
+        res.status(200).json({
+            success: true,
+            message: "Profile updated successfully",
+            data: {
+                id: user._id,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+                bio: user.bio,
+                profileImage: user.profileImage
+            }
+        });
+
+    } catch (error) {
+        console.error("Profile update error:", error.message);
+
+        res.status(500).json({
+            success: false,
+            message: "Unable to update profile"
+        });
+    }
+};
+
+
+
 module.exports = {
     registerUser,
     loginUser,
-    getMe
+    getMe,
+    updateProfile
 };
