@@ -1,7 +1,7 @@
-
 const Course = require("../models/Course");
 const Section = require("../models/Section");
 const Lesson = require("../models/Lesson");
+const Enrollment = require("../models/Enrollment");
 
 // Check whether the user can manage this course
 const checkCourseAccess = (course, user) => {
@@ -401,6 +401,76 @@ const deleteLesson = async (req, res) => {
     }
 };
 
+// Get Course Curriculum for Enrolled Students
+const getStudentCourseCurriculum = async (req, res) => {
+    try {
+        const { courseId } = req.params;
+
+        const course = await Course.findById(courseId);
+
+        if (!course) {
+            return res.status(404).json({
+                success: false,
+                message: "Course not found"
+            });
+        }
+
+        const enrollment = await Enrollment.findOne({
+            student: req.user._id,
+            course: courseId,
+            status: { $in: ["active", "completed"] }
+        });
+
+        if (!enrollment) {
+            return res.status(403).json({
+                success: false,
+                message: "You must be enrolled to access this course"
+            });
+        }
+
+        const sections = await Section.find({ course: courseId })
+            .sort({ order: 1 })
+            .lean();
+
+        const sectionIds = sections.map(section => section._id);
+
+        const lessons = await Lesson.find({
+            section: { $in: sectionIds }
+        })
+            .sort({ order: 1 })
+            .lean();
+
+        const curriculum = sections.map(section => ({
+            ...section,
+            lessons: lessons.filter(
+                lesson =>
+                    lesson.section.toString() === section._id.toString()
+            )
+        }));
+
+        res.status(200).json({
+            success: true,
+            data: {
+                course: {
+                    id: course._id,
+                    title: course.title,
+                    description: course.description,
+                    thumbnail: course.thumbnail
+                },
+                totalSections: sections.length,
+                data: curriculum
+            }
+        });
+
+    } catch (error) {
+        console.error("Student curriculum error:", error.message);
+
+        res.status(500).json({
+            success: false,
+            message: "Unable to load course curriculum"
+        });
+    }
+};
 
 module.exports = {
     createSection,
@@ -410,5 +480,6 @@ module.exports = {
     createLesson,
     getSectionLessons,
     updateLesson,
-    deleteLesson
+    deleteLesson,
+    getStudentCourseCurriculum
 };
