@@ -7,7 +7,6 @@ function CurriculumBuilder() {
 
   const [courses, setCourses] = useState([]);
   const [selectedCourse, setSelectedCourse] = useState("");
-
   const [sections, setSections] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -16,9 +15,11 @@ function CurriculumBuilder() {
   const [lessonInputs, setLessonInputs] = useState({});
   const [creatingLesson, setCreatingLesson] = useState(false);
   const [editingLesson, setEditingLesson] = useState(null);
-const [editedLessonTitle, setEditedLessonTitle] = useState("");
-const [editingSection, setEditingSection] = useState(null);
-const [editedSectionTitle, setEditedSectionTitle] = useState("");
+  const [editedLessonTitle, setEditedLessonTitle] = useState("");
+  const [editingSection, setEditingSection] = useState(null);
+  const [editedSectionTitle, setEditedSectionTitle] = useState("");
+  const [lessonVideoInputs, setLessonVideoInputs] = useState({});
+  const [editedLessonVideo, setEditedLessonVideo] = useState("");
 
   useEffect(() => {
     const fetchCourses = async () => {
@@ -144,6 +145,7 @@ const [editedSectionTitle, setEditedSectionTitle] = useState("");
           body: JSON.stringify({
             title,
             type: "video",
+            videoKey: lessonVideoInputs[sectionId] || "",
             durationSec: 0,
             isPreview: false,
           }),
@@ -157,6 +159,10 @@ const [editedSectionTitle, setEditedSectionTitle] = useState("");
       }
   
       setLessonInputs((prev) => ({
+        ...prev,
+        [sectionId]: "",
+      }));
+      setLessonVideoInputs((prev) => ({
         ...prev,
         [sectionId]: "",
       }));
@@ -188,6 +194,7 @@ const [editedSectionTitle, setEditedSectionTitle] = useState("");
           },
           body: JSON.stringify({
             title: editedLessonTitle,
+            videoKey: editedLessonVideo,
           }),
         }
       );
@@ -427,6 +434,12 @@ const [editedSectionTitle, setEditedSectionTitle] = useState("");
                         value={editedLessonTitle}
                         onChange={(e) => setEditedLessonTitle(e.target.value)}
                       />
+                      <input
+                          type="text"
+                          placeholder="Enter video URL"
+                          value={editedLessonVideo}
+                          onChange={(e) => setEditedLessonVideo(e.target.value)}
+                      />
 
                       <button
                         type="button"
@@ -455,6 +468,7 @@ const [editedSectionTitle, setEditedSectionTitle] = useState("");
                       onClick={() => {
                         setEditingLesson(lesson._id);
                         setEditedLessonTitle(lesson.title);
+                        setEditedLessonVideo(lesson.videoKey || "");
                       }}
                     >
                       Edit
@@ -488,6 +502,17 @@ const [editedSectionTitle, setEditedSectionTitle] = useState("");
                     }
                     required
                   />
+                   <input
+                      type="text"
+                      placeholder="Enter video URL (YouTube or MP4)"
+                      value={lessonVideoInputs[section._id] || ""}
+                      onChange={(e) =>
+                        setLessonVideoInputs((prev) => ({
+                          ...prev,
+                          [section._id]: e.target.value,
+                        }))
+                      }
+                    />
               
                   <button type="submit" disabled={creatingLesson}>
                     {creatingLesson ? "Adding..." : "Add Lesson"}
