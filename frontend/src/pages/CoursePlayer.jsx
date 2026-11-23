@@ -1,17 +1,46 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+
+const parseTranscript = (transcript = "") => {
+  return transcript
+    .split("\n")
+    .map((line, index) => {
+      const trimmedLine = line.trim();
+
+      const match = trimmedLine.match(
+        /^(\d{2}):([0-5]\d):([0-5]\d(?:\.\d{1,3})?)\s+(.+)$/
+      );
+
+      if (!match) return null;
+
+      const [, hours, minutes, seconds, text] = match;
+
+      return {
+        id: index,
+        time:
+          Number(hours) * 3600 +
+          Number(minutes) * 60 +
+          Number(seconds),
+        timestamp: `${hours}:${minutes}:${seconds}`,
+        text,
+      };
+    })
+    .filter(Boolean);
+};
 
 function CoursePlayer() {
   const { courseId } = useParams();
   const { token } = useAuth();
-
+  const videoRef = useRef(null);
   const [course, setCourse] = useState(null);
   const [sections, setSections] = useState([]);
   const [activeLesson, setActiveLesson] = useState(null);
   const [completedLessonIds, setCompletedLessonIds] = useState([]);
   const [faqs, setFaqs] = useState([]);
   const [openFAQ, setOpenFAQ] = useState(null);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [transcriptSearch, setTranscriptSearch] = useState("");
   const [progress, setProgress] = useState({
     totalLessons: 0,
     completedLessons: 0,
@@ -115,6 +144,8 @@ function CoursePlayer() {
 
   const handleSelectLesson = async (lesson) => {
     setActiveLesson(lesson);
+    setCurrentTime(0);
+    setTranscriptSearch("");
 
     try {
       await fetch(
@@ -130,6 +161,25 @@ function CoursePlayer() {
       );
     } catch (err) {
       console.error("Unable to save last lesson:", err.message);
+    }
+  };
+
+  const handleTranscriptClick = (time) => {
+    if (!videoRef.current) return;
+  
+    videoRef.current.currentTime = time;
+    videoRef.current.play();
+  };
+  const handleVideoTimeUpdate = (e) => {
+    const time = e.currentTarget.currentTime;
+  
+    setCurrentTime(time);
+  
+    if (activeLesson) {
+      localStorage.setItem(
+        `learnsphere-${courseId}-${activeLesson._id}`,
+        time.toString()
+      );
     }
   };
 
@@ -197,6 +247,20 @@ function CoursePlayer() {
   const isActiveLessonCompleted =
     activeLesson &&
     completedLessonIds.includes(activeLesson._id);
+    const transcriptLines = parseTranscript(
+      activeLesson?.transcript || ""
+    );
+    
+    const filteredTranscriptLines = transcriptLines.filter((line) =>
+      line.text.toLowerCase().includes(transcriptSearch.toLowerCase())
+    );
+    
+    const activeTranscriptIndex = transcriptLines.reduce(
+      (activeIndex, line, index) => {
+        return line.time <= currentTime ? index : activeIndex;
+      },
+      -1
+    );
 
   return (
     <div style={{ padding: "25px" }}>
@@ -237,13 +301,30 @@ function CoursePlayer() {
           <h2>{activeLesson?.title || "Select a lesson"}</h2>
 
           {activeLesson?.videoKey ? (
+              <>
                 <video
+                ref={videoRef}
                 key={activeLesson._id}
                 src={activeLesson.videoKey}
+                onLoadedMetadata={() => {
+                  const video = videoRef.current;
+                
+                  if (!video) return;
+                
+                  const savedTime = localStorage.getItem(
+                    `learnsphere-${courseId}-${activeLesson._id}`
+                  );
+                
+                  if (savedTime && Number(savedTime) < video.duration - 2) {
+                    video.currentTime = Number(savedTime);
+                  }
+                }}
                 controls
+                loop
                 controlsList="nodownload"
                 disablePictureInPicture
                 onContextMenu={(e) => e.preventDefault()}
+                onTimeUpdate={handleVideoTimeUpdate}
                 style={{ width: "100%", background: "#000" }}
               >
                 {activeLesson.subtitleUrl && (
@@ -256,18 +337,72 @@ function CoursePlayer() {
                   />
                 )}
               </video>
+              </>
             ) : (
                 <p>Select a lesson with a video to start learning.</p>
             )}
-            {activeLesson?.transcript && (
-                <details>
-                  <summary>Lesson Transcript</summary>
+           {activeLesson?.transcript && (
+  <div
+    style={{
+      marginTop: "20px",
+      padding: "20px",
+      border: "1px solid #e2e8f0",
+      borderRadius: "10px",
+    }}
+  >
+    <h3>Lesson Transcript</h3>
 
-                  <p style={{ whiteSpace: "pre-wrap" }}>
-                    {activeLesson.transcript}
-                  </p>
-                </details>
-            )}
+    <input
+      type="text"
+      placeholder="Search transcript..."
+      value={transcriptSearch}
+      onChange={(e) => setTranscriptSearch(e.target.value)}
+      style={{
+        width: "100%",
+        padding: "10px",
+        marginBottom: "15px",
+        boxSizing: "border-box",
+      }}
+    />
+
+    {filteredTranscriptLines.length === 0 ? (
+      <p>No matching transcript lines found.</p>
+    ) : (
+      filteredTranscriptLines.map((line) => (
+        <div
+          key={line.id}
+          style={{
+            display: "flex",
+            gap: "12px",
+            padding: "10px",
+            marginBottom: "5px",
+            background:
+              transcriptLines[activeTranscriptIndex]?.id === line.id
+                ? "#dbeafe"
+                : "#f8fafc",
+            borderRadius: "6px",
+          }}
+        >
+          <button
+            onClick={() => handleTranscriptClick(line.time)}
+            style={{
+              border: "none",
+              background: "transparent",
+              color: "#2563eb",
+              fontWeight: "bold",
+              cursor: "pointer",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {line.timestamp}
+          </button>
+
+          <span>{line.text}</span>
+        </div>
+      ))
+    )}
+  </div>
+)}
 
             {course.instructor && (
                 <div style={{

@@ -26,6 +26,17 @@ const lessonSchema = new mongoose.Schema(
       type: String,
       default: ""
     },
+    resources: [
+      {
+        title: { type: String, trim: true },
+        url: { type: String, trim: true },
+        type: {
+          type: String,
+          enum: ["pdf", "document", "link", "other"],
+          default: "other"
+        }
+      }
+    ],
     subtitleUrl: {
       type: String,
       default: ""
