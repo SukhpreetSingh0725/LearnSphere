@@ -20,6 +20,17 @@ function CurriculumBuilder() {
   const [editedSectionTitle, setEditedSectionTitle] = useState("");
   const [lessonVideoInputs, setLessonVideoInputs] = useState({});
   const [editedLessonVideo, setEditedLessonVideo] = useState("");
+  const [lessonSubtitleInputs, setLessonSubtitleInputs] = useState({});
+  const [lessonTranscriptInputs, setLessonTranscriptInputs] = useState({});
+  const [editedLessonSubtitle, setEditedLessonSubtitle] = useState("");
+  const [editedLessonTranscript, setEditedLessonTranscript] = useState("");
+  const [faqs, setFaqs] = useState([]);
+  const [faqQuestion, setFaqQuestion] = useState("");
+  const [faqAnswer, setFaqAnswer] = useState("");
+  const [editingFAQ, setEditingFAQ] = useState(null);
+  const [editedFAQQuestion, setEditedFAQQuestion] = useState("");
+  const [editedFAQAnswer, setEditedFAQAnswer] = useState("");
+  const [savingFAQ, setSavingFAQ] = useState(false);
 
   useEffect(() => {
     const fetchCourses = async () => {
@@ -78,6 +89,31 @@ function CurriculumBuilder() {
       setLoading(false);
     }
   };
+  const fetchFAQs = async (courseId) => {
+    try {
+        const response = await fetch(
+            `http://localhost:5000/api/courses/${courseId}/manage-faqs`,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                },
+                cache: "no-store"
+            }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.message || "Failed to fetch FAQs");
+        }
+
+        setFaqs(data.data || []);
+
+    } catch (error) {
+        setError(error.message);
+        setFaqs([]);
+    }
+};
 
   const handleCreateSection = async (e) => {
     e.preventDefault();
@@ -146,6 +182,8 @@ function CurriculumBuilder() {
             title,
             type: "video",
             videoKey: lessonVideoInputs[sectionId] || "",
+            subtitleUrl: lessonSubtitleInputs[sectionId] || "",
+            transcript: lessonTranscriptInputs[sectionId] || "",
             durationSec: 0,
             isPreview: false,
           }),
@@ -163,6 +201,15 @@ function CurriculumBuilder() {
         [sectionId]: "",
       }));
       setLessonVideoInputs((prev) => ({
+        ...prev,
+        [sectionId]: "",
+      }));
+      setLessonSubtitleInputs((prev) => ({
+        ...prev,
+        [sectionId]: "",
+      }));
+      
+      setLessonTranscriptInputs((prev) => ({
         ...prev,
         [sectionId]: "",
       }));
@@ -195,6 +242,8 @@ function CurriculumBuilder() {
           body: JSON.stringify({
             title: editedLessonTitle,
             videoKey: editedLessonVideo,
+            subtitleUrl: editedLessonSubtitle,
+            transcript: editedLessonTranscript,
           }),
         }
       );
@@ -318,13 +367,139 @@ function CurriculumBuilder() {
 
   const handleCourseChange = (e) => {
     const courseId = e.target.value;
+
     setSelectedCourse(courseId);
     setSections([]);
+    setFaqs([]);
+    setError("");
 
     if (courseId) {
-      fetchCurriculum(courseId);
+        fetchCurriculum(courseId);
+        fetchFAQs(courseId);
     }
-  };
+};
+
+const handleCreateFAQ = async (e) => {
+  e.preventDefault();
+
+  if (!faqQuestion.trim() || !faqAnswer.trim()) {
+      setError("Please enter both question and answer");
+      return;
+  }
+
+  try {
+      setSavingFAQ(true);
+      setError("");
+
+      const response = await fetch(
+          `http://localhost:5000/api/courses/${selectedCourse}/faqs`,
+          {
+              method: "POST",
+              headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${token}`
+              },
+              body: JSON.stringify({
+                  question: faqQuestion,
+                  answer: faqAnswer
+              })
+          }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+          throw new Error(data.message || "Failed to create FAQ");
+      }
+
+      setFaqQuestion("");
+      setFaqAnswer("");
+
+      await fetchFAQs(selectedCourse);
+
+  } catch (error) {
+      setError(error.message);
+  } finally {
+      setSavingFAQ(false);
+  }
+};
+
+const handleUpdateFAQ = async (faqId) => {
+  if (!editedFAQQuestion.trim() || !editedFAQAnswer.trim()) {
+      setError("Please enter both question and answer");
+      return;
+  }
+
+  try {
+      setSavingFAQ(true);
+      setError("");
+
+      const response = await fetch(
+          `http://localhost:5000/api/faqs/${faqId}`,
+          {
+              method: "PUT",
+              headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${token}`
+              },
+              body: JSON.stringify({
+                  question: editedFAQQuestion,
+                  answer: editedFAQAnswer
+              })
+          }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+          throw new Error(data.message || "Failed to update FAQ");
+      }
+
+      setEditingFAQ(null);
+      setEditedFAQQuestion("");
+      setEditedFAQAnswer("");
+
+      await fetchFAQs(selectedCourse);
+
+  } catch (error) {
+      setError(error.message);
+  } finally {
+      setSavingFAQ(false);
+  }
+};
+
+const handleDeleteFAQ = async (faqId) => {
+  const confirmed = window.confirm(
+      "Are you sure you want to delete this FAQ?"
+  );
+
+  if (!confirmed) return;
+
+  try {
+      setError("");
+
+      const response = await fetch(
+          `http://localhost:5000/api/faqs/${faqId}`,
+          {
+              method: "DELETE",
+              headers: {
+                  Authorization: `Bearer ${token}`
+              }
+          }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+          throw new Error(data.message || "Failed to delete FAQ");
+      }
+
+      await fetchFAQs(selectedCourse);
+
+  } catch (error) {
+      setError(error.message);
+  }
+};
 
   return (
     <div className="curriculum-builder">
@@ -350,6 +525,7 @@ function CurriculumBuilder() {
       {loading && <p>Loading curriculum...</p>}
 
       {selectedCourse && !loading && (
+           <>
         <div className="curriculum-sections">
           <h3>Course Sections</h3>
           <form onSubmit={handleCreateSection} className="add-section-form">
@@ -440,6 +616,19 @@ function CurriculumBuilder() {
                           value={editedLessonVideo}
                           onChange={(e) => setEditedLessonVideo(e.target.value)}
                       />
+                      <input
+                        type="text"
+                        placeholder="Enter subtitle URL (.vtt)"
+                        value={editedLessonSubtitle}
+                        onChange={(e) => setEditedLessonSubtitle(e.target.value)}
+                      />
+
+                      <textarea
+                        placeholder="Enter lesson transcript"
+                        value={editedLessonTranscript}
+                        onChange={(e) => setEditedLessonTranscript(e.target.value)}
+                        rows={5}
+                      />
 
                       <button
                         type="button"
@@ -469,6 +658,8 @@ function CurriculumBuilder() {
                         setEditingLesson(lesson._id);
                         setEditedLessonTitle(lesson.title);
                         setEditedLessonVideo(lesson.videoKey || "");
+                        setEditedLessonSubtitle(lesson.subtitleUrl || "");
+                        setEditedLessonTranscript(lesson.transcript || "");
                       }}
                     >
                       Edit
@@ -513,6 +704,29 @@ function CurriculumBuilder() {
                         }))
                       }
                     />
+                    <input
+                        type="text"
+                        placeholder="Enter subtitle URL (.vtt)"
+                        value={lessonSubtitleInputs[section._id] || ""}
+                        onChange={(e) =>
+                          setLessonSubtitleInputs((prev) => ({
+                            ...prev,
+                            [section._id]: e.target.value,
+                          }))
+                        }
+                    />
+
+                    <textarea
+                        placeholder="Enter lesson transcript"
+                        value={lessonTranscriptInputs[section._id] || ""}
+                        onChange={(e) =>
+                          setLessonTranscriptInputs((prev) => ({
+                            ...prev,
+                            [section._id]: e.target.value,
+                          }))
+                        }
+                        rows={5}
+                    />
               
                   <button type="submit" disabled={creatingLesson}>
                     {creatingLesson ? "Adding..." : "Add Lesson"}
@@ -521,10 +735,113 @@ function CurriculumBuilder() {
               </div>
             ))
           )}
+              </div>
+
+{/* FAQ Management */}
+<div className="course-faq-manager">
+  <h3>Course FAQs</h3>
+  <p>Manage frequently asked questions for your students.</p>
+
+  <form onSubmit={handleCreateFAQ} className="faq-create-form">
+    <input
+      type="text"
+      placeholder="Enter FAQ question"
+      value={faqQuestion}
+      onChange={(e) => setFaqQuestion(e.target.value)}
+      maxLength={300}
+      required
+    />
+
+    <textarea
+      placeholder="Enter FAQ answer"
+      value={faqAnswer}
+      onChange={(e) => setFaqAnswer(e.target.value)}
+      maxLength={2000}
+      required
+    />
+
+    <button type="submit" disabled={savingFAQ}>
+      {savingFAQ ? "Adding..." : "Add FAQ"}
+    </button>
+  </form>
+
+  <div className="faq-management-list">
+    {faqs.length === 0 ? (
+      <p>No FAQs added yet.</p>
+    ) : (
+      faqs.map((faq) => (
+        <div className="faq-management-item" key={faq._id}>
+          {editingFAQ === faq._id ? (
+            <div className="faq-edit-form">
+              <input
+                type="text"
+                value={editedFAQQuestion}
+                onChange={(e) =>
+                  setEditedFAQQuestion(e.target.value)
+                }
+                maxLength={300}
+              />
+
+              <textarea
+                value={editedFAQAnswer}
+                onChange={(e) =>
+                  setEditedFAQAnswer(e.target.value)
+                }
+                maxLength={2000}
+              />
+
+              <button
+                type="button"
+                disabled={savingFAQ}
+                onClick={() => handleUpdateFAQ(faq._id)}
+              >
+                Save
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setEditingFAQ(null);
+                  setEditedFAQQuestion("");
+                  setEditedFAQAnswer("");
+                }}
+              >
+                Cancel
+              </button>
+            </div>
+          ) : (
+            <>
+              <h4>{faq.question}</h4>
+              <p>{faq.answer}</p>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setEditingFAQ(faq._id);
+                  setEditedFAQQuestion(faq.question);
+                  setEditedFAQAnswer(faq.answer);
+                }}
+              >
+                Edit
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleDeleteFAQ(faq._id)}
+              >
+                Delete
+              </button>
+            </>
+          )}
         </div>
-      )}
-    </div>
-  );
+      ))
+    )}
+  </div>
+  </div>
+</>
+)}
+</div>
+);
 }
 
 export default CurriculumBuilder;
