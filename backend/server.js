@@ -13,6 +13,7 @@ const adminUserRoutes = require("./routes/adminUserRoutes");
 const adminAnalyticsRoutes = require("./routes/adminAnalyticsRoutes");
 const instructorAnalyticsRoutes = require("./routes/instructorAnalyticsRoutes");
 const progressRoutes = require("./routes/progressRoutes");
+const faqRoutes = require("./routes/faqRoutes");
 
 const app = express();
 
@@ -28,6 +29,7 @@ app.use("/api/admin/users", adminUserRoutes);
 app.use("/api/admin/analytics", adminAnalyticsRoutes);
 app.use("/api/instructor/analytics", instructorAnalyticsRoutes);
 app.use("/api/progress", progressRoutes);
+app.use("/api", faqRoutes);
 
 app.get("/", (req, res) => {
     res.send("Welcome to LearnSphere API!");
