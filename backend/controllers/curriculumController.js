@@ -71,7 +71,7 @@ const getCourseCurriculum = async (req, res) => {
     try {
         const { courseId } = req.params;
 
-        const course = await Course.findById(courseId);
+        const course = await Course.findById(courseId)
 
         if (!course) {
             return res.status(404).json({
@@ -212,7 +212,7 @@ const deleteSection = async (req, res) => {
 const createLesson = async (req, res) => {
     try {
         const { sectionId } = req.params;
-        const { title, type, durationSec, isPreview, videoKey } = req.body;
+        const { title, type, durationSec, isPreview, videoKey,subtitleUrl,transcript } = req.body;
 
         if (!title || !title.trim()) {
             return res.status(400).json({
@@ -251,6 +251,8 @@ const createLesson = async (req, res) => {
             durationSec,
             isPreview,
             videoKey,
+            subtitleUrl,
+            transcript,
             order
         });
 
@@ -314,7 +316,8 @@ const getSectionLessons = async (req, res) => {
 const updateLesson = async (req, res) => {
     try {
         const { lessonId } = req.params;
-        const { title, type, durationSec, isPreview, videoKey } = req.body;
+        const { title, type, durationSec, isPreview, videoKey,subtitleUrl,
+            transcript } = req.body;
 
         const lesson = await Lesson.findById(lessonId);
 
@@ -342,6 +345,8 @@ const updateLesson = async (req, res) => {
         if (durationSec !== undefined) lesson.durationSec = durationSec;
         if (isPreview !== undefined) lesson.isPreview = isPreview;
         if (videoKey !== undefined) lesson.videoKey = videoKey;
+        if (subtitleUrl !== undefined) lesson.subtitleUrl = subtitleUrl;
+        if (transcript !== undefined) lesson.transcript = transcript;
 
         await lesson.save();
 
@@ -406,7 +411,8 @@ const getStudentCourseCurriculum = async (req, res) => {
     try {
         const { courseId } = req.params;
 
-        const course = await Course.findById(courseId);
+        const course = await Course.findById(courseId)
+        .populate("instructor", "name profileImage bio");
 
         if (!course) {
             return res.status(404).json({
@@ -455,7 +461,15 @@ const getStudentCourseCurriculum = async (req, res) => {
                     id: course._id,
                     title: course.title,
                     description: course.description,
-                    thumbnail: course.thumbnail
+                    thumbnail: course.thumbnail,
+                    instructor: course.instructor
+                        ? {
+                            id: course.instructor._id,
+                            name: course.instructor.name,
+                            profileImage: course.instructor.profileImage,
+                            bio: course.instructor.bio
+                        }
+                        : null
                 },
                 totalSections: sections.length,
                 data: curriculum
