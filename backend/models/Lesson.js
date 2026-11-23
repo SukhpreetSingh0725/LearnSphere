@@ -26,6 +26,15 @@ const lessonSchema = new mongoose.Schema(
       type: String,
       default: ""
     },
+    subtitleUrl: {
+      type: String,
+      default: ""
+    },
+    
+    transcript: {
+      type: String,
+      default: ""
+    },
 
     durationSec: {
       type: Number,
