@@ -1,3 +1,4 @@
+
 .my-learning {
   padding: 30px;
 }
@@ -40,6 +41,12 @@
   border-radius: 12px;
   overflow: hidden;
   background: white;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.learning-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
 }
 
 .learning-card img {
@@ -57,6 +64,45 @@
   margin: 10px 0;
 }
 
+.course-progress {
+  margin: 18px 0;
+}
+
+.course-progress-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 9px;
+  font-size: 14px;
+  color: #374151;
+}
+
+.course-progress-heading strong {
+  color: #2563eb;
+  font-size: 15px;
+}
+
+.course-progress-track {
+  width: 100%;
+  height: 9px;
+  background: #e5e7eb;
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+.course-progress-fill {
+  height: 100%;
+  background: #2563eb;
+  border-radius: 20px;
+  transition: width 0.4s ease;
+}
+
+.course-progress p {
+  font-size: 12px;
+  color: #888;
+  margin-top: 8px;
+}
+
 .learning-status {
   display: inline-block;
   padding: 5px 10px;
@@ -64,6 +110,16 @@
   background: #dbeafe;
   color: #1d4ed8;
   font-size: 13px;
+}
+
+.learning-status.completed {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.learning-status.active {
+  background: #dbeafe;
+  color: #1d4ed8;
 }
 
 .learning-card-content button {
@@ -76,6 +132,11 @@
   background: #2563eb;
   color: white;
   cursor: pointer;
+  transition: background 0.2s;
+}
+
+.learning-card-content button:hover {
+  background: #1d4ed8;
 }
 
 .learning-empty {
