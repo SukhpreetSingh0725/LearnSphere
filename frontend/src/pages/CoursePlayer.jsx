@@ -10,6 +10,8 @@ function CoursePlayer() {
   const [sections, setSections] = useState([]);
   const [activeLesson, setActiveLesson] = useState(null);
   const [completedLessonIds, setCompletedLessonIds] = useState([]);
+  const [faqs, setFaqs] = useState([]);
+  const [openFAQ, setOpenFAQ] = useState(null);
   const [progress, setProgress] = useState({
     totalLessons: 0,
     completedLessons: 0,
@@ -24,24 +26,36 @@ function CoursePlayer() {
   useEffect(() => {
     const fetchCourseData = async () => {
       try {
-        const [curriculumResponse, progressResponse] = await Promise.all([
+        const [
+          curriculumResponse,
+          progressResponse,
+          faqResponse
+        ] = await Promise.all([
           fetch(`${API}/api/courses/${courseId}/learn`, {
             headers: {
               Authorization: `Bearer ${token}`,
             },
             cache: "no-store",
           }),
-
+        
           fetch(`${API}/api/progress/${courseId}`, {
             headers: {
               Authorization: `Bearer ${token}`,
             },
             cache: "no-store",
           }),
+        
+          fetch(`${API}/api/courses/${courseId}/faqs`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+            cache: "no-store",
+          })
         ]);
 
         const curriculumData = await curriculumResponse.json();
         const progressData = await progressResponse.json();
+        const faqData = await faqResponse.json();
 
         if (!curriculumResponse.ok) {
           throw new Error(
@@ -60,6 +74,7 @@ function CoursePlayer() {
 
         setCourse(curriculumData.data.course);
         setSections(courseSections);
+        setFaqs(faqData.success ? faqData.data : []);
         setCompletedLessonIds(
           progressInfo.completedLessonIds || []
         );
@@ -222,18 +237,121 @@ function CoursePlayer() {
           <h2>{activeLesson?.title || "Select a lesson"}</h2>
 
           {activeLesson?.videoKey ? (
-            <video
-              key={activeLesson._id}
-              src={activeLesson.videoKey}
-              controls
-              controlsList="nodownload"
-              disablePictureInPicture
-              onContextMenu={(e) => e.preventDefault()}
-              style={{ width: "100%", background: "#000" }}
-            />
-          ) : (
-            <p>Select a lesson with a video to start learning.</p>
-          )}
+                <video
+                key={activeLesson._id}
+                src={activeLesson.videoKey}
+                controls
+                controlsList="nodownload"
+                disablePictureInPicture
+                onContextMenu={(e) => e.preventDefault()}
+                style={{ width: "100%", background: "#000" }}
+              >
+                {activeLesson.subtitleUrl && (
+                  <track
+                    kind="subtitles"
+                    src={activeLesson.subtitleUrl}
+                    srcLang="en"
+                    label="English"
+                    default
+                  />
+                )}
+              </video>
+            ) : (
+                <p>Select a lesson with a video to start learning.</p>
+            )}
+            {activeLesson?.transcript && (
+                <details>
+                  <summary>Lesson Transcript</summary>
+
+                  <p style={{ whiteSpace: "pre-wrap" }}>
+                    {activeLesson.transcript}
+                  </p>
+                </details>
+            )}
+
+            {course.instructor && (
+                <div style={{
+                    marginTop: "25px",
+                    padding: "20px",
+                    background: "#f8fafc",
+                    border: "1px solid #e2e8f0",
+                    borderRadius: "10px"
+                }}>
+                    <h3>About the Instructor</h3>
+
+                    <div style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "15px",
+                        marginTop: "15px"
+                    }}>
+                        <img
+                            src={course.instructor.profileImage || "https://placehold.co/80x80"}
+                            alt={course.instructor.name}
+                            style={{
+                                width: "65px",
+                                height: "65px",
+                                borderRadius: "50%",
+                                objectFit: "cover"
+                            }}
+                        />
+
+                        <div>
+                            <h3>{course.instructor.name}</h3>
+                            <p>{course.instructor.bio}</p>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+<div style={{
+            marginTop: "25px",
+            padding: "20px",
+            background: "#fff",
+            border: "1px solid #e2e8f0",
+            borderRadius: "10px"
+          }}>
+            <h3>Frequently Asked Questions</h3>
+
+            {faqs.length === 0 ? (
+              <p style={{ color: "#64748b" }}>
+                No FAQs available yet.
+              </p>
+            ) : (
+              faqs.map((faq) => (
+                <div
+                  key={faq._id}
+                  style={{
+                    borderBottom: "1px solid #e5e7eb",
+                    padding: "12px 0"
+                  }}
+                >
+                  <button
+                    onClick={() =>
+                      setOpenFAQ(openFAQ === faq._id ? null : faq._id)
+                    }
+                    style={{
+                      width: "100%",
+                      border: "none",
+                      background: "transparent",
+                      textAlign: "left",
+                      cursor: "pointer",
+                      fontWeight: "600",
+                      padding: "8px 0"
+                    }}
+                  >
+                    {openFAQ === faq._id ? "−" : "+"} {faq.question}
+                  </button>
+
+                  {openFAQ === faq._id && (
+                    <p style={{ marginTop: "8px", color: "#475569" }}>
+                      {faq.answer}
+                    </p>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
 
           {activeLesson && (
             <button
@@ -242,9 +360,7 @@ function CoursePlayer() {
               style={{
                 marginTop: "15px",
                 padding: "12px 20px",
-                background: isActiveLessonCompleted
-                  ? "#64748b"
-                  : "#16a34a",
+                background: isActiveLessonCompleted ? "#64748b" : "#16a34a",
                 color: "#fff",
                 border: "none",
                 borderRadius: "6px",
