@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
@@ -33,6 +33,11 @@ function CoursePlayer() {
   const { courseId } = useParams();
   const { token } = useAuth();
   const videoRef = useRef(null);
+  const resumeAtRef = useRef(0);
+  const autoCompletedRef = useRef(new Set());
+  const shouldAutoPlayRef = useRef(false);
+  const [stream, setStream] = useState({ lessonId: null, url: "" });
+  const [streamError, setStreamError] = useState("");
   const [course, setCourse] = useState(null);
   const [sections, setSections] = useState([]);
   const [activeLesson, setActiveLesson] = useState(null);
@@ -41,6 +46,8 @@ function CoursePlayer() {
   const [openFAQ, setOpenFAQ] = useState(null);
   const [currentTime, setCurrentTime] = useState(0);
   const [transcriptSearch, setTranscriptSearch] = useState("");
+  const [speed, setSpeed] = useState(1);
+  const [autoPlayNext, setAutoPlayNext] = useState(true);
   const [progress, setProgress] = useState({
     totalLessons: 0,
     completedLessons: 0,
@@ -49,6 +56,7 @@ function CoursePlayer() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [downloadingResource, setDownloadingResource] = useState("");
 
   const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
@@ -66,14 +74,14 @@ function CoursePlayer() {
             },
             cache: "no-store",
           }),
-        
+
           fetch(`${API}/api/progress/${courseId}`, {
             headers: {
               Authorization: `Bearer ${token}`,
             },
             cache: "no-store",
           }),
-        
+
           fetch(`${API}/api/courses/${courseId}/faqs`, {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -142,6 +150,93 @@ function CoursePlayer() {
     }
   }, [courseId, token]);
 
+  // Ask the API for a short-lived signed URL whenever the lesson changes.
+  const fetchStreamUrl = useCallback(async (lessonId) => {
+    try {
+      const res = await fetch(`${API}/api/lessons/${lessonId}/stream-url`, {
+        headers: { Authorization: `Bearer ${token}` },
+        cache: "no-store",
+      });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.message || "Unable to load video");
+      setStreamError("");
+      setStream({ lessonId, url: body.data.url });
+    } catch (err) {
+      setStream({ lessonId: null, url: "" });
+      setStreamError(err.message);
+    }
+  }, [API, token]);
+
+  useEffect(() => {
+    resumeAtRef.current = 0;
+    if (!activeLesson?.hasVideo || !token) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchStreamUrl(activeLesson._id);
+  }, [activeLesson?._id, activeLesson?.hasVideo, token, fetchStreamUrl]);
+
+  // Signed URLs expire (about 5 minutes). If playback fails after that,
+  // get a fresh URL and continue from the same position.
+  const handleVideoError = () => {
+    if (!activeLesson) return;
+    resumeAtRef.current = videoRef.current?.currentTime || 0;
+    fetchStreamUrl(activeLesson._id);
+  };
+
+  // Flat list of lessons for Previous / Next navigation
+  const lessonList = sections.flatMap((section) => section.lessons);
+  const activeIndex = lessonList.findIndex(
+    (lesson) => lesson._id === activeLesson?._id
+  );
+  const prevLesson = activeIndex > 0 ? lessonList[activeIndex - 1] : null;
+  const nextLesson =
+    activeIndex >= 0 && activeIndex < lessonList.length - 1
+      ? lessonList[activeIndex + 1]
+      : null;
+        // Only use a URL that belongs to the lesson currently shown
+  const streamUrl =
+  stream.lessonId === activeLesson?._id ? stream.url : "";
+
+  // Marks the current lesson complete (never un-completes)
+  const markCurrentComplete = async () => {
+    if (!activeLesson || completedLessonIds.includes(activeLesson._id)) return;
+    const lessonId = activeLesson._id;
+
+    try {
+      const response = await fetch(
+        `${API}/api/progress/${courseId}/lessons/${lessonId}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ completed: true }),
+        }
+      );
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message);
+
+      const updated = data.data;
+      setProgress({
+        totalLessons: updated.totalLessons,
+        completedLessons: updated.completedLessons,
+        percentage: updated.percentage,
+      });
+      setCompletedLessonIds((prev) =>
+        prev.includes(lessonId) ? prev : [...prev, lessonId]
+      );
+    } catch (err) {
+      console.error("Auto-complete failed:", err.message);
+      autoCompletedRef.current.delete(lessonId);
+    }
+  };
+
+  const handleSpeedChange = (e) => {
+    const value = Number(e.target.value);
+    setSpeed(value);
+    if (videoRef.current) videoRef.current.playbackRate = value;
+  };
+
   const handleSelectLesson = async (lesson) => {
     setActiveLesson(lesson);
     setCurrentTime(0);
@@ -164,22 +259,40 @@ function CoursePlayer() {
     }
   };
 
+  const handleVideoEnded = () => {
+    if (autoPlayNext && nextLesson) {
+      shouldAutoPlayRef.current = true;
+      handleSelectLesson(nextLesson);
+    }
+  };
+
   const handleTranscriptClick = (time) => {
     if (!videoRef.current) return;
-  
+
     videoRef.current.currentTime = time;
     videoRef.current.play();
   };
+
   const handleVideoTimeUpdate = (e) => {
-    const time = e.currentTarget.currentTime;
-  
+    const video = e.currentTarget;
+    const time = video.currentTime;
+
     setCurrentTime(time);
-  
-    if (activeLesson) {
-      localStorage.setItem(
-        `learnsphere-${courseId}-${activeLesson._id}`,
-        time.toString()
-      );
+    if (!activeLesson) return;
+
+    localStorage.setItem(
+      `learnsphere-${courseId}-${activeLesson._id}`,
+      time.toString()
+    );
+
+    // Auto-complete once 90% has been watched (once per lesson per visit)
+    if (
+      video.duration > 0 &&
+      time / video.duration >= 0.9 &&
+      !autoCompletedRef.current.has(activeLesson._id)
+    ) {
+      autoCompletedRef.current.add(activeLesson._id);
+      markCurrentComplete();
     }
   };
 
@@ -247,20 +360,47 @@ function CoursePlayer() {
   const isActiveLessonCompleted =
     activeLesson &&
     completedLessonIds.includes(activeLesson._id);
-    const transcriptLines = parseTranscript(
-      activeLesson?.transcript || ""
-    );
-    
-    const filteredTranscriptLines = transcriptLines.filter((line) =>
-      line.text.toLowerCase().includes(transcriptSearch.toLowerCase())
-    );
-    
-    const activeTranscriptIndex = transcriptLines.reduce(
-      (activeIndex, line, index) => {
-        return line.time <= currentTime ? index : activeIndex;
-      },
-      -1
-    );
+
+  const transcriptLines = parseTranscript(
+    activeLesson?.transcript || ""
+  );
+
+  const filteredTranscriptLines = transcriptLines.filter((line) =>
+    line.text.toLowerCase().includes(transcriptSearch.toLowerCase())
+  );
+
+  const activeTranscriptIndex = transcriptLines.reduce(
+    (activeIdx, line, index) => {
+      return line.time <= currentTime ? index : activeIdx;
+    },
+    -1
+  );
+  const handleResourceDownload = async (resource) => {
+    try {
+      setDownloadingResource(resource.url);
+  
+      const response = await fetch(
+       `${API}/api/lessons/${activeLesson._id}/resource-url?key=${encodeURIComponent(resource.url)}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+  
+      const data = await response.json();
+  
+      if (!response.ok) {
+        throw new Error(data.message || "Unable to download resource");
+      }
+  
+      window.open(data.data.url, "_blank", "noopener,noreferrer");
+    } catch (error) {
+      alert(error.message);
+    } finally {
+      setDownloadingResource("");
+    }
+  };
 
   return (
     <div style={{ padding: "25px" }}>
@@ -300,48 +440,175 @@ function CoursePlayer() {
         <div style={{ flex: 3 }}>
           <h2>{activeLesson?.title || "Select a lesson"}</h2>
 
-          {activeLesson?.videoKey ? (
-              <>
-                <video
-                ref={videoRef}
-                key={activeLesson._id}
-                src={activeLesson.videoKey}
-                onLoadedMetadata={() => {
-                  const video = videoRef.current;
-                
-                  if (!video) return;
-                
-                  const savedTime = localStorage.getItem(
-                    `learnsphere-${courseId}-${activeLesson._id}`
-                  );
-                
-                  if (savedTime && Number(savedTime) < video.duration - 2) {
-                    video.currentTime = Number(savedTime);
-                  }
-                }}
-                controls
-                loop
-                controlsList="nodownload"
-                disablePictureInPicture
-                onContextMenu={(e) => e.preventDefault()}
-                onTimeUpdate={handleVideoTimeUpdate}
-                style={{ width: "100%", background: "#000" }}
+          {activeLesson?.hasVideo ? (
+            <video
+              key={activeLesson._id}
+              ref={videoRef}
+              src={streamUrl || undefined}
+              onError={handleVideoError}
+              onEnded={handleVideoEnded}
+              onLoadedMetadata={() => {
+                const video = videoRef.current;
+                if (!video) return;
+
+                video.playbackRate = speed;
+
+                // Autoplay when arriving from "next lesson"
+                if (shouldAutoPlayRef.current) {
+                  shouldAutoPlayRef.current = false;
+                  video.play().catch(() => {});
+                }
+
+                // After a URL refresh, continue from where playback stopped
+                if (resumeAtRef.current > 0) {
+                  video.currentTime = resumeAtRef.current;
+                  video.play().catch(() => {});
+                  resumeAtRef.current = 0;
+                  return;
+                }
+
+                // Otherwise resume from the saved position
+                const savedTime = localStorage.getItem(
+                  `learnsphere-${courseId}-${activeLesson._id}`
+                );
+
+                if (savedTime && Number(savedTime) < video.duration - 2) {
+                  video.currentTime = Number(savedTime);
+                }
+              }}
+              controls
+              controlsList="nodownload"
+              disablePictureInPicture
+              onContextMenu={(e) => e.preventDefault()}
+              onTimeUpdate={handleVideoTimeUpdate}
+              style={{ width: "100%", background: "#000" }}
+            >
+              {activeLesson.subtitleUrl && (
+                <track
+                  kind="subtitles"
+                  src={activeLesson.subtitleUrl}
+                  srcLang="en"
+                  label="English"
+                  default
+                />
+              )}
+            </video>
+          ) : (
+            <p>Select a lesson with a video to start learning.</p>
+          )}
+
+          {streamError && <p style={{ color: "#dc2626" }}>{streamError}</p>}
+
+          {activeLesson && (
+            <div
+              style={{
+                display: "flex",
+                gap: "12px",
+                alignItems: "center",
+                flexWrap: "wrap",
+                marginTop: "12px",
+              }}
+            >
+              <button
+                disabled={!prevLesson}
+                onClick={() => prevLesson && handleSelectLesson(prevLesson)}
               >
-                {activeLesson.subtitleUrl && (
-                  <track
-                    kind="subtitles"
-                    src={activeLesson.subtitleUrl}
-                    srcLang="en"
-                    label="English"
-                    default
-                  />
-                )}
-              </video>
-              </>
-            ) : (
-                <p>Select a lesson with a video to start learning.</p>
-            )}
-           {activeLesson?.transcript && (
+                ← Previous
+              </button>
+
+              <button
+                disabled={!nextLesson}
+                onClick={() => nextLesson && handleSelectLesson(nextLesson)}
+              >
+                Next →
+              </button>
+
+              <label>
+                Speed{" "}
+                <select value={speed} onChange={handleSpeedChange}>
+                  {[0.5, 0.75, 1, 1.25, 1.5, 1.75, 2].map((rate) => (
+                    <option key={rate} value={rate}>
+                      {rate}x
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label>
+                <input
+                  type="checkbox"
+                  checked={autoPlayNext}
+                  onChange={(e) => setAutoPlayNext(e.target.checked)}
+                />{" "}
+                Autoplay next
+              </label>
+            </div>
+          )}
+
+          {activeLesson?.transcript && (
+            <div
+              style={{
+                marginTop: "20px",
+                padding: "20px",
+                border: "1px solid #e2e8f0",
+                borderRadius: "10px",
+              }}
+            >
+              <h3>Lesson Transcript</h3>
+
+              <input
+                type="text"
+                placeholder="Search transcript..."
+                value={transcriptSearch}
+                onChange={(e) => setTranscriptSearch(e.target.value)}
+                style={{
+                  width: "100%",
+                  padding: "10px",
+                  marginBottom: "15px",
+                  boxSizing: "border-box",
+                }}
+              />
+
+              {filteredTranscriptLines.length === 0 ? (
+                <p>No matching transcript lines found.</p>
+              ) : (
+                filteredTranscriptLines.map((line) => (
+                  <div
+                    key={line.id}
+                    style={{
+                      display: "flex",
+                      gap: "12px",
+                      padding: "10px",
+                      marginBottom: "5px",
+                      background:
+                        transcriptLines[activeTranscriptIndex]?.id === line.id
+                          ? "#dbeafe"
+                          : "#f8fafc",
+                      borderRadius: "6px",
+                    }}
+                  >
+                    <button
+                      onClick={() => handleTranscriptClick(line.time)}
+                      style={{
+                        border: "none",
+                        background: "transparent",
+                        color: "#2563eb",
+                        fontWeight: "bold",
+                        cursor: "pointer",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {line.timestamp}
+                    </button>
+
+                    <span>{line.text}</span>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
+
+{activeLesson?.resources?.length > 0 && (
   <div
     style={{
       marginTop: "20px",
@@ -350,96 +617,66 @@ function CoursePlayer() {
       borderRadius: "10px",
     }}
   >
-    <h3>Lesson Transcript</h3>
+    <h3>Lesson Resources</h3>
 
-    <input
-      type="text"
-      placeholder="Search transcript..."
-      value={transcriptSearch}
-      onChange={(e) => setTranscriptSearch(e.target.value)}
-      style={{
-        width: "100%",
-        padding: "10px",
-        marginBottom: "15px",
-        boxSizing: "border-box",
-      }}
-    />
-
-    {filteredTranscriptLines.length === 0 ? (
-      <p>No matching transcript lines found.</p>
-    ) : (
-      filteredTranscriptLines.map((line) => (
-        <div
-          key={line.id}
-          style={{
-            display: "flex",
-            gap: "12px",
-            padding: "10px",
-            marginBottom: "5px",
-            background:
-              transcriptLines[activeTranscriptIndex]?.id === line.id
-                ? "#dbeafe"
-                : "#f8fafc",
-            borderRadius: "6px",
-          }}
+    {activeLesson.resources.map((resource, index) => (
+      <div key={index} style={{ marginBottom: "10px" }}>
+        <button
+          type="button"
+          onClick={() => handleResourceDownload(resource)}
+          disabled={downloadingResource === resource.url}
         >
-          <button
-            onClick={() => handleTranscriptClick(line.time)}
-            style={{
-              border: "none",
-              background: "transparent",
-              color: "#2563eb",
-              fontWeight: "bold",
-              cursor: "pointer",
-              whiteSpace: "nowrap",
-            }}
-          >
-            {line.timestamp}
-          </button>
+          {downloadingResource === resource.url
+            ? "Preparing download..."
+            : `Download ${resource.title || "Resource"}`}
+        </button>
 
-          <span>{line.text}</span>
-        </div>
-      ))
-    )}
+        <small> ({resource.type})</small>
+      </div>
+    ))}
   </div>
 )}
 
             {course.instructor && (
-                <div style={{
-                    marginTop: "25px",
-                    padding: "20px",
-                    background: "#f8fafc",
-                    border: "1px solid #e2e8f0",
-                    borderRadius: "10px"
-                }}>
-                    <h3>About the Instructor</h3>
+              <div
+                style={{
+                  marginTop: "25px",
+                  padding: "20px",
+                  background: "#f8fafc",
+                  border: "1px solid #e2e8f0",
+                  borderRadius: "10px",
+                }}
+              >
+                <h3>About the Instructor</h3>
 
-                    <div style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "15px",
-                        marginTop: "15px"
-                    }}>
-                        <img
-                            src={course.instructor.profileImage || "https://placehold.co/80x80"}
-                            alt={course.instructor.name}
-                            style={{
-                                width: "65px",
-                                height: "65px",
-                                borderRadius: "50%",
-                                objectFit: "cover"
-                            }}
-                        />
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "15px",
+                    marginTop: "15px",
+                  }}
+                >
+                  <img
+                    src={course.instructor.profileImage || "https://placehold.co/80x80"}
+                    alt={course.instructor.name}
+                    style={{
+                      width: "65px",
+                      height: "65px",
+                      borderRadius: "50%",
+                      objectFit: "cover",
+                    }}
+                  />
 
-                        <div>
-                            <h3>{course.instructor.name}</h3>
-                            <p>{course.instructor.bio}</p>
-                        </div>
-                    </div>
+                  <div>
+                    <h3>{course.instructor.name}</h3>
+                    <p>{course.instructor.bio}</p>
+                  </div>
                 </div>
+              </div>
             )}
 
-<div style={{
+          <div style={{
             marginTop: "25px",
             padding: "20px",
             background: "#fff",
