@@ -1,5 +1,9 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
+import {
+  uploadLessonVideo,
+  uploadLessonResource,
+} from "../utils/uploadVideo";
 import "./CurriculumBuilder.css";
 
 function CurriculumBuilder() {
@@ -20,6 +24,8 @@ function CurriculumBuilder() {
   const [editedSectionTitle, setEditedSectionTitle] = useState("");
   const [lessonVideoInputs, setLessonVideoInputs] = useState({});
   const [editedLessonVideo, setEditedLessonVideo] = useState("");
+  const [uploadingVideo, setUploadingVideo] = useState(false);
+  const [uploadMessage, setUploadMessage] = useState("");
   const [lessonSubtitleInputs, setLessonSubtitleInputs] = useState({});
   const [lessonTranscriptInputs, setLessonTranscriptInputs] = useState({});
   const [editedLessonSubtitle, setEditedLessonSubtitle] = useState("");
@@ -31,6 +37,67 @@ function CurriculumBuilder() {
   const [editedFAQQuestion, setEditedFAQQuestion] = useState("");
   const [editedFAQAnswer, setEditedFAQAnswer] = useState("");
   const [savingFAQ, setSavingFAQ] = useState(false);
+  const [lessonResources, setLessonResources] = useState([]);
+  const [editedLessonResources, setEditedLessonResources] = useState([]);
+  const [uploadingResourceIndex, setUploadingResourceIndex] = useState(null);
+  const handleAddResource = (isEditing = false) => {
+  const newResource = { title: "", url: "", type: "other" };
+  
+    if (isEditing) {
+      setEditedLessonResources((prev) => [...prev, newResource]);
+    } else {
+      setLessonResources((prev) => [...prev, newResource]);
+    }
+  };
+  
+  const handleResourceChange = (isEditing, index, field, value) => {
+    const setter = isEditing ? setEditedLessonResources : setLessonResources;
+  
+    setter((prev) =>
+      prev.map((resource, i) =>
+        i === index ? { ...resource, [field]: value } : resource
+      )
+    );
+  };
+  
+  const handleRemoveResource = (isEditing, index) => {
+    const setter = isEditing ? setEditedLessonResources : setLessonResources;
+  
+    setter((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleResourceFileChange = async (index, file, lessonId) => {
+    if (!file) return;
+  
+    try {
+      setUploadingResourceIndex(index);
+  
+      const key = await uploadLessonResource({
+        file,
+        lessonId,
+        token,
+      });
+  
+      setEditedLessonResources((prev) =>
+        prev.map((resource, i) =>
+          i === index
+            ? {
+                ...resource,
+                title: file.name,
+                url: key,
+                type: file.type === "application/pdf" ? "pdf" : "document",
+              }
+            : resource
+        )
+      );
+  
+      alert("Resource uploaded successfully!");
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setUploadingResourceIndex(null);
+    }
+  };
 
   useEffect(() => {
     const fetchCourses = async () => {
@@ -222,7 +289,28 @@ function CurriculumBuilder() {
     }
   };
 
+  const handleVideoFileChange = async (e, lessonId) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingVideo(true);
+    setUploadMessage("");
+    setError("");
+
+    try {
+      const key = await uploadLessonVideo({ file, lessonId, token });
+      console.log("Uploaded key:", key);
+      setEditedLessonVideo(key);
+      setUploadMessage("Video uploaded. Click Save to attach it to this lesson.");
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setUploadingVideo(false);
+      e.target.value = "";
+    }
+  };
   const handleUpdateLesson = async (lessonId) => {
+    console.log("Saving lesson with videoKey:", editedLessonVideo);
     if (!editedLessonTitle.trim()) {
       setError("Lesson title cannot be empty");
       return;
@@ -244,6 +332,7 @@ function CurriculumBuilder() {
             videoKey: editedLessonVideo,
             subtitleUrl: editedLessonSubtitle,
             transcript: editedLessonTranscript,
+            resources: editedLessonResources,
           }),
         }
       );
@@ -256,6 +345,7 @@ function CurriculumBuilder() {
   
       setEditingLesson(null);
       setEditedLessonTitle("");
+      setUploadMessage("");
   
       await fetchCurriculum(selectedCourse);
     } catch (err) {
@@ -610,12 +700,20 @@ const handleDeleteFAQ = async (faqId) => {
                         value={editedLessonTitle}
                         onChange={(e) => setEditedLessonTitle(e.target.value)}
                       />
-                      <input
-                          type="text"
-                          placeholder="Enter video URL"
-                          value={editedLessonVideo}
-                          onChange={(e) => setEditedLessonVideo(e.target.value)}
-                      />
+                        <label>
+                        Lesson video (MP4, WebM or MOV, up to 50 MB)
+                        <input
+                          type="file"
+                          accept="video/mp4,video/webm,video/quicktime"
+                          disabled={uploadingVideo}
+                          onChange={(e) => handleVideoFileChange(e, lesson._id)}
+                        />
+                      </label>
+                      {uploadingVideo && <p>Uploading video, please wait...</p>}
+                      {uploadMessage && <p>{uploadMessage}</p>}
+                      {editedLessonVideo && !uploadMessage && (
+                        <p>A video is attached. Choose a file to replace it.</p>
+                      )}
                       <input
                         type="text"
                         placeholder="Enter subtitle URL (.vtt)"
@@ -624,12 +722,61 @@ const handleDeleteFAQ = async (faqId) => {
                       />
 
                       <textarea
-                        placeholder="Enter lesson transcript"
+                        placeholder="Enter timestamped transcript (e.g. 00:00:05 Welcome!)"
                         value={editedLessonTranscript}
                         onChange={(e) => setEditedLessonTranscript(e.target.value)}
                         rows={5}
                       />
+                     <div>
+                        <h4>Lesson Resources</h4>
 
+                        {editedLessonResources.map((resource, index) => (
+                          <div key={index}>
+                            <input
+                              type="text"
+                              placeholder="Resource title"
+                              value={resource.title}
+                              onChange={(e) =>
+                                handleResourceChange(true, index, "title", e.target.value)
+                              }
+                            />
+
+                            <input
+                              type="file"
+                              accept=".pdf,.doc,.docx,.ppt,.pptx"
+                              onChange={(e) =>
+                                handleResourceFileChange(
+                                  index,
+                                  e.target.files[0],
+                                  lesson._id
+                                )
+                              }
+                            />
+
+                            {uploadingResourceIndex === index && (
+                              <p>Uploading resource...</p>
+                            )}
+
+                            {resource.url && (
+                              <p>Uploaded: {resource.title}</p>
+                            )}
+
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveResource(true, index)}
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        ))}
+
+                        <button
+                          type="button"
+                          onClick={() => handleAddResource(true)}
+                        >
+                          + Add Resource
+                        </button>
+                      </div>
                       <button
                         type="button"
                         onClick={() => handleUpdateLesson(lesson._id)}
@@ -647,7 +794,11 @@ const handleDeleteFAQ = async (faqId) => {
                   ) : (
                     <span>{lesson.title}</span>
                   )}
-                      <small>{lesson.type}</small>
+                       <small>
+                        {lesson.type}
+                        {" · "}
+                        {lesson.videoKey ? "✅ Video attached" : "⚠️ No video"}
+                      </small>
                     </div>
                   
                     <div className="lesson-actions">
@@ -660,6 +811,7 @@ const handleDeleteFAQ = async (faqId) => {
                         setEditedLessonVideo(lesson.videoKey || "");
                         setEditedLessonSubtitle(lesson.subtitleUrl || "");
                         setEditedLessonTranscript(lesson.transcript || "");
+                        setEditedLessonResources(lesson.resources || []);
                       }}
                     >
                       Edit
@@ -693,17 +845,7 @@ const handleDeleteFAQ = async (faqId) => {
                     }
                     required
                   />
-                   <input
-                      type="text"
-                      placeholder="Enter video URL (YouTube or MP4)"
-                      value={lessonVideoInputs[section._id] || ""}
-                      onChange={(e) =>
-                        setLessonVideoInputs((prev) => ({
-                          ...prev,
-                          [section._id]: e.target.value,
-                        }))
-                      }
-                    />
+                    <p>Create the lesson first, then click Edit to upload its video.</p>
                     <input
                         type="text"
                         placeholder="Enter subtitle URL (.vtt)"
@@ -717,7 +859,7 @@ const handleDeleteFAQ = async (faqId) => {
                     />
 
                     <textarea
-                        placeholder="Enter lesson transcript"
+                        placeholder="Enter timestamped transcript (e.g. 00:00:05 Welcome!)"
                         value={lessonTranscriptInputs[section._id] || ""}
                         onChange={(e) =>
                           setLessonTranscriptInputs((prev) => ({
