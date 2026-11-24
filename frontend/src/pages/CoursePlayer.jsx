@@ -45,6 +45,7 @@ function CoursePlayer() {
   const [faqs, setFaqs] = useState([]);
   const [openFAQ, setOpenFAQ] = useState(null);
   const [currentTime, setCurrentTime] = useState(0);
+  const [resumePosition, setResumePosition] = useState(0);
   const [transcriptSearch, setTranscriptSearch] = useState("");
   const [speed, setSpeed] = useState(1);
   const [autoPlayNext, setAutoPlayNext] = useState(true);
@@ -137,6 +138,9 @@ function CoursePlayer() {
         );
 
         setActiveLesson(resumeLesson || firstVideoLesson || null);
+        setResumePosition(
+          resumeLesson ? progressInfo.lastPosition || 0 : 0
+        );
 
       } catch (err) {
         setError(err.message);
@@ -240,7 +244,9 @@ function CoursePlayer() {
   const handleSelectLesson = async (lesson) => {
     setActiveLesson(lesson);
     setCurrentTime(0);
+    setResumePosition(0);
     setTranscriptSearch("");
+    lastSavedPositionRef.current = 0;
 
     try {
       await fetch(
@@ -251,7 +257,9 @@ function CoursePlayer() {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({}),
+          body: JSON.stringify({
+            lastPosition: 0,
+          }),
         }
       );
     } catch (err) {
@@ -273,28 +281,57 @@ function CoursePlayer() {
     videoRef.current.play();
   };
 
-  const handleVideoTimeUpdate = (e) => {
-    const video = e.currentTarget;
-    const time = video.currentTime;
+  const lastSavedPositionRef = useRef(0);
 
-    setCurrentTime(time);
-    if (!activeLesson) return;
+const savePlaybackPosition = async (lessonId, position) => {
+  if (!lessonId || !token) return;
 
-    localStorage.setItem(
-      `learnsphere-${courseId}-${activeLesson._id}`,
-      time.toString()
+  try {
+    await fetch(
+      `${API}/api/progress/${courseId}/lessons/${lessonId}`,
+      {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          lastPosition: position,
+        }),
+      }
     );
+  } catch (err) {
+    console.error("Unable to save playback position:", err.message);
+  }
+};
 
-    // Auto-complete once 90% has been watched (once per lesson per visit)
-    if (
-      video.duration > 0 &&
-      time / video.duration >= 0.9 &&
-      !autoCompletedRef.current.has(activeLesson._id)
-    ) {
-      autoCompletedRef.current.add(activeLesson._id);
-      markCurrentComplete();
-    }
-  };
+const handleVideoTimeUpdate = (e) => {
+  const video = e.currentTarget;
+  const time = video.currentTime;
+
+  setCurrentTime(time);
+
+  if (!activeLesson) return;
+
+  localStorage.setItem(
+    `learnsphere-${courseId}-${activeLesson._id}`,
+    time.toString()
+  );
+
+  if (time - lastSavedPositionRef.current >= 10) {
+    lastSavedPositionRef.current = time;
+    savePlaybackPosition(activeLesson._id, time);
+  }
+
+  if (
+    video.duration > 0 &&
+    time / video.duration >= 0.9 &&
+    !autoCompletedRef.current.has(activeLesson._id)
+  ) {
+    autoCompletedRef.current.add(activeLesson._id);
+    markCurrentComplete();
+  }
+};
 
   const handleCompleteLesson = async () => {
     if (!activeLesson || saving) return;
@@ -467,7 +504,13 @@ function CoursePlayer() {
                   return;
                 }
 
-                // Otherwise resume from the saved position
+              // Resume from the position saved in MongoDB
+                if (resumePosition > 0 && resumePosition < video.duration - 2) {
+                  video.currentTime = resumePosition;
+                  return;
+                }
+
+                // Fallback to the browser's locally saved position
                 const savedTime = localStorage.getItem(
                   `learnsphere-${courseId}-${activeLesson._id}`
                 );
@@ -481,6 +524,14 @@ function CoursePlayer() {
               disablePictureInPicture
               onContextMenu={(e) => e.preventDefault()}
               onTimeUpdate={handleVideoTimeUpdate}
+              onPause={(e) => {
+                const position = e.currentTarget.currentTime;
+              
+                if (activeLesson) {
+                  lastSavedPositionRef.current = position;
+                  savePlaybackPosition(activeLesson._id, position);
+                }
+              }}
               style={{ width: "100%", background: "#000" }}
             >
               {activeLesson.subtitleUrl && (

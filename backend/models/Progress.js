@@ -26,6 +26,12 @@ const progressSchema = new mongoose.Schema(
       ref: "Lesson",
       default: null
     },
+    
+    lastPosition: {
+      type: Number,
+      default: 0,
+      min: 0
+    },
 
     completedAt: {
       type: Date,

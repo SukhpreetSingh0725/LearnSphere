@@ -63,6 +63,7 @@ const getCourseProgress = async (req, res) => {
         ),
         percentage,
         lastLesson: progress?.lastLesson || null,
+        lastPosition: progress?.lastPosition || 0,
         completedAt: progress?.completedAt || null
       }
     });
@@ -83,6 +84,19 @@ const updateLessonProgress = async (req, res) => {
   try {
     const { courseId, lessonId } = req.params;
     const { completed } = req.body;
+    if (
+      lastPosition !== undefined &&
+      (
+        typeof lastPosition !== "number" ||
+        !Number.isFinite(lastPosition) ||
+        lastPosition < 0
+      )
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Last position must be a valid non-negative number"
+      });
+    }
 
     if (
       !mongoose.Types.ObjectId.isValid(courseId) ||
@@ -146,6 +160,10 @@ const updateLessonProgress = async (req, res) => {
         lastLesson: lessonId
       }
     };
+    
+    if (lastPosition !== undefined) {
+      update.$set.lastPosition = lastPosition;
+    }
 
     if (completed === true) {
       update.$addToSet = {
@@ -202,6 +220,7 @@ const updateLessonProgress = async (req, res) => {
         ),
         percentage,
         lastLesson: progress.lastLesson,
+        lastPosition: progress.lastPosition || 0,
         completedAt: progress.completedAt
       }
     });
