@@ -1,37 +1,47 @@
-import { useState } from "react";
+
+import { useEffect, useState } from "react";
 import "./CourseCurriculum.css";
 
-const curriculum = [
-  {
-    id: 1,
-    title: "Section 1: Introduction",
-    lessons: [
-      { id: 1, title: "Welcome to the Course", duration: "05:20", preview: true },
-      { id: 2, title: "Course Overview", duration: "08:15", preview: true },
-      { id: 3, title: "Learning Requirements", duration: "06:30", preview: false },
-    ],
-  },
-  {
-    id: 2,
-    title: "Section 2: Fundamentals",
-    lessons: [
-      { id: 4, title: "Understanding the Basics", duration: "12:40", preview: true },
-      { id: 5, title: "Important Concepts", duration: "15:10", preview: false },
-      { id: 6, title: "Practical Examples", duration: "10:25", preview: false },
-    ],
-  },
-  {
-    id: 3,
-    title: "Section 3: Advanced Learning",
-    lessons: [
-      { id: 7, title: "Advanced Topics", duration: "18:30", preview: false },
-      { id: 8, title: "Real World Applications", duration: "14:20", preview: false },
-    ],
-  },
-];
+function CourseCurriculum({ courseId }) {
+  const [curriculum, setCurriculum] = useState([]);
+  const [expandedSections, setExpandedSections] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-function CourseCurriculum() {
-  const [expandedSections, setExpandedSections] = useState([1]);
+  useEffect(() => {
+    const fetchCurriculum = async () => {
+      try {
+        setLoading(true);
+        setError("");
+
+        const response = await fetch(
+          `http://localhost:5000/api/courses/${courseId}/curriculum`
+        );
+
+        const result = await response.json();
+
+        if (!response.ok) {
+          throw new Error(result.message || "Unable to load curriculum");
+        }
+
+        const sections = result.data || [];
+
+        setCurriculum(sections);
+
+        if (sections.length > 0) {
+          setExpandedSections([sections[0]._id]);
+        }
+      } catch (err) {
+        setError(err.message || "Unable to load curriculum");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (courseId) {
+      fetchCurriculum();
+    }
+  }, [courseId]);
 
   const totalLessons = curriculum.reduce(
     (total, section) => total + section.lessons.length,
@@ -45,6 +55,33 @@ function CourseCurriculum() {
         : [...previous, id]
     );
   };
+
+  const formatDuration = (seconds) => {
+    if (!seconds || seconds <= 0) return "";
+
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+
+    return `${minutes}:${String(remainingSeconds).padStart(2, "0")}`;
+  };
+
+  if (loading) {
+    return (
+      <section className="curriculum-section">
+        <h2>Course Curriculum</h2>
+        <p>Loading course curriculum...</p>
+      </section>
+    );
+  }
+
+  if (error) {
+    return (
+      <section className="curriculum-section">
+        <h2>Course Curriculum</h2>
+        <p>{error}</p>
+      </section>
+    );
+  }
 
   return (
     <section className="curriculum-section">
@@ -60,60 +97,64 @@ function CourseCurriculum() {
         </div>
       </div>
 
-      <div className="curriculum-list">
-        {curriculum.map((section) => {
-          const isExpanded = expandedSections.includes(section.id);
+      {curriculum.length === 0 ? (
+        <p>No curriculum has been added to this course yet.</p>
+      ) : (
+        <div className="curriculum-list">
+          {curriculum.map((section) => {
+            const isExpanded = expandedSections.includes(section._id);
 
-          return (
-            <div className="curriculum-item" key={section.id}>
-              <button
-                type="button"
-                className="curriculum-section-button"
-                onClick={() => toggleSection(section.id)}
-               aria-expanded={isExpanded}
-               aria-label={`${isExpanded ? "Collapse" : "Expand"} ${section.title}`}
-              >
-                <span className="curriculum-section-title">
-                  {section.title}
-                </span>
+            return (
+              <div className="curriculum-item" key={section._id}>
+                <button
+                  type="button"
+                  className="curriculum-section-button"
+                  onClick={() => toggleSection(section._id)}
+                  aria-expanded={isExpanded}
+                  aria-label={`${isExpanded ? "Collapse" : "Expand"} ${section.title}`}
+                >
+                  <span className="curriculum-section-title">
+                    {section.title}
+                  </span>
 
-                <span className="curriculum-section-meta">
-                  {section.lessons.length} lessons
-                  <span>{isExpanded ? "−" : "+"}</span>
-                </span>
-              </button>
+                  <span className="curriculum-section-meta">
+                    {section.lessons.length} lessons
+                    <span>{isExpanded ? "−" : "+"}</span>
+                  </span>
+                </button>
 
-              {isExpanded && (
-                <div className="curriculum-lessons">
-                  {section.lessons.map((lesson) => (
-                    <div className="curriculum-lesson" key={lesson.id}>
-                      <div className="lesson-info">
-                        <span className="lesson-icon">
-                          {lesson.preview ? "▶" : "🔒"}
-                        </span>
+                {isExpanded && (
+                  <div className="curriculum-lessons">
+                    {section.lessons.map((lesson) => (
+                      <div className="curriculum-lesson" key={lesson._id}>
+                        <div className="lesson-info">
+                          <span className="lesson-icon">
+                            {lesson.isPreview ? "▶" : "🔒"}
+                          </span>
 
-                        <span>{lesson.title}</span>
+                          <span>{lesson.title}</span>
+                        </div>
+
+                        <div className="lesson-meta">
+                          {lesson.isPreview && (
+                            <span className="preview-label">Preview</span>
+                          )}
+
+                          {formatDuration(lesson.durationSec) && (
+                            <span>
+                              {formatDuration(lesson.durationSec)}
+                            </span>
+                          )}
+                        </div>
                       </div>
-
-                      <div className="lesson-meta">
-                        {lesson.preview && (
-                          <span className="preview-label">Preview</span>
-                        )}
-                        <span>{lesson.duration}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
-
-      <p className="curriculum-note">
-        This is a sample curriculum preview. Actual lessons will be loaded
-        from the course API in a future integration.
-      </p>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
     </section>
   );
 }

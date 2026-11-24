@@ -177,7 +177,7 @@ function CourseDetails() {
             </ul>
         </section>
 
-        <CourseCurriculum />
+        <CourseCurriculum courseId={id} />
 
         <section className="instructor-profile">
             <h2>Meet Your Instructor</h2>

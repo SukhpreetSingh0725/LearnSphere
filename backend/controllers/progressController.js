@@ -83,7 +83,7 @@ const getCourseProgress = async (req, res) => {
 const updateLessonProgress = async (req, res) => {
   try {
     const { courseId, lessonId } = req.params;
-    const { completed } = req.body;
+    const { completed, lastPosition } = req.body;
     if (
       lastPosition !== undefined &&
       (

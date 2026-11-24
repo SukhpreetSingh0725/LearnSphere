@@ -5,6 +5,7 @@ const {
     createSection,
     getCourseCurriculum,
     getStudentCourseCurriculum,
+    getPublicCourseCurriculum,
     updateSection,
     deleteSection,
     createLesson,
@@ -17,6 +18,11 @@ const { protect } = require("../middleware/authMiddleware");
 const { authorizeRoles } = require("../middleware/roleMiddleware");
 
 const router = express.Router();
+// Get public course curriculum
+router.get(
+    "/courses/:courseId/curriculum",
+    getPublicCourseCurriculum
+);
 
 // Create section
 router.post(

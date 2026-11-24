@@ -409,6 +409,65 @@ const deleteLesson = async (req, res) => {
     }
 };
 
+// Get Public Course Curriculum
+const getPublicCourseCurriculum = async (req, res) => {
+    try {
+        const { courseId } = req.params;
+
+        const course = await Course.findOne({
+            _id: courseId,
+            status: "published"
+        });
+
+        if (!course) {
+            return res.status(404).json({
+                success: false,
+                message: "Course not found"
+            });
+        }
+
+        const sections = await Section.find({ course: courseId })
+            .sort({ order: 1 })
+            .lean();
+
+        const sectionIds = sections.map(section => section._id);
+
+        const lessons = await Lesson.find({
+            section: { $in: sectionIds }
+        })
+            .select("section title type durationSec isPreview order videoKey")
+            .sort({ order: 1 })
+            .lean();
+
+        const curriculum = sections.map(section => ({
+            ...section,
+            lessons: lessons
+                .filter(
+                    lesson =>
+                        lesson.section.toString() === section._id.toString()
+                )
+                .map(({ videoKey, ...lesson }) => ({
+                    ...lesson,
+                    hasVideo: Boolean(videoKey)
+                }))
+        }));
+
+        res.status(200).json({
+            success: true,
+            totalSections: sections.length,
+            totalLessons: lessons.length,
+            data: curriculum
+        });
+
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: "Unable to load course curriculum"
+        });
+    }
+};
+
+
 // Get Course Curriculum for Enrolled Students
 const getStudentCourseCurriculum = async (req, res) => {
     try {
@@ -503,5 +562,6 @@ module.exports = {
     getSectionLessons,
     updateLesson,
     deleteLesson,
-    getStudentCourseCurriculum
+    getStudentCourseCurriculum,
+    getPublicCourseCurriculum,
 };

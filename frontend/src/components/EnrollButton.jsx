@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import "./EnrollButton.css";
@@ -10,10 +10,79 @@ function EnrollButton({ course }) {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [isEnrolled, setIsEnrolled] = useState(false);
+  const [checkingEnrollment, setCheckingEnrollment] = useState(true);
+  const [isCompleted, setIsCompleted] = useState(false);
 
   const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
+  useEffect(() => {
+    const checkEnrollment = async () => {
+      if (!user || !token || user.role !== "student") {
+        setIsEnrolled(false);
+        setCheckingEnrollment(false);
+        return;
+      }
+  
+      try {
+        const response = await fetch(`${API}/api/enrollments/my-courses`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+  
+        const result = await response.json();
+  
+        if (!response.ok) {
+          throw new Error(result.message || "Unable to check enrollment");
+        }
+  
+        const enrollments = result.data || [];
+  
+        const alreadyEnrolled = enrollments.some((enrollment) => {
+          const enrolledCourse = enrollment.course?._id || enrollment.course;
+          return String(enrolledCourse) === String(course._id);
+        });
+  
+        setIsEnrolled(alreadyEnrolled);
+        if (alreadyEnrolled) {
+          const progressResponse = await fetch(
+            `${API}/api/progress/${course._id}`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+        
+          const progressResult = await progressResponse.json();
+        
+          if (progressResponse.ok) {
+            const progress = progressResult.data;
+        
+            setIsCompleted(
+              Boolean(progress?.completedAt) ||
+              (Number(progress?.totalLessons) > 0 &&
+                Number(progress?.percentage) >= 100)
+            );
+          }
+        } else {
+          setIsCompleted(false);
+        }
+      } catch (err) {
+        console.error("Enrollment check failed:", err.message);
+      } finally {
+        setCheckingEnrollment(false);
+      }
+    };
+  
+    checkEnrollment();
+  }, [course._id, user, token, API]);
 
   const handleEnroll = async () => {
+    if (isEnrolled) {
+      navigate(`/learn/${course._id}`);
+      return;
+    }
     setMessage("");
     setError("");
 
@@ -159,8 +228,17 @@ function EnrollButton({ course }) {
 
   return (
     <div className="enroll-container">
-      <button onClick={handleEnroll} disabled={loading}>
-        {loading
+      <button
+          onClick={handleEnroll}
+          disabled={loading || checkingEnrollment}
+      >
+        {checkingEnrollment
+          ? "Checking..."
+          : isEnrolled
+          ? isCompleted
+            ? "Review Course"
+            : "Continue Learning"
+          : loading
           ? "Processing..."
           : Number(course.price) === 0
           ? "Enroll for Free"
