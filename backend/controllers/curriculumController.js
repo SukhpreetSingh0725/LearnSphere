@@ -212,7 +212,8 @@ const deleteSection = async (req, res) => {
 const createLesson = async (req, res) => {
     try {
         const { sectionId } = req.params;
-        const { title, type, durationSec, isPreview, videoKey,subtitleUrl,transcript } = req.body;
+        const { title, type, durationSec, isPreview, videoKey,subtitleUrl
+            ,transcript, resources } = req.body;
 
         if (!title || !title.trim()) {
             return res.status(400).json({
@@ -253,6 +254,7 @@ const createLesson = async (req, res) => {
             videoKey,
             subtitleUrl,
             transcript,
+            resources,
             order
         });
 
@@ -317,7 +319,7 @@ const updateLesson = async (req, res) => {
     try {
         const { lessonId } = req.params;
         const { title, type, durationSec, isPreview, videoKey,subtitleUrl,
-            transcript } = req.body;
+            transcript, resources } = req.body;
 
         const lesson = await Lesson.findById(lessonId);
 
@@ -347,6 +349,7 @@ const updateLesson = async (req, res) => {
         if (videoKey !== undefined) lesson.videoKey = videoKey;
         if (subtitleUrl !== undefined) lesson.subtitleUrl = subtitleUrl;
         if (transcript !== undefined) lesson.transcript = transcript;
+        if (resources !== undefined) lesson.resources = resources;
 
         await lesson.save();
 
@@ -446,13 +449,18 @@ const getStudentCourseCurriculum = async (req, res) => {
             .sort({ order: 1 })
             .lean();
 
-        const curriculum = sections.map(section => ({
-            ...section,
-            lessons: lessons.filter(
-                lesson =>
-                    lesson.section.toString() === section._id.toString()
-            )
-        }));
+            const curriculum = sections.map(section => ({
+                ...section,
+                lessons: lessons
+                    .filter(
+                        lesson =>
+                            lesson.section.toString() === section._id.toString()
+                    )
+                    .map(({ videoKey, ...lesson }) => ({
+                        ...lesson,
+                        hasVideo: Boolean(videoKey)
+                    }))
+            }));
 
         res.status(200).json({
             success: true,
