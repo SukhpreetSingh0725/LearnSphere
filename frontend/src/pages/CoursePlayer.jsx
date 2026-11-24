@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import StudentQuizzes from "../components/StudentQuizzes";
 
 const parseTranscript = (transcript = "") => {
   return transcript
@@ -797,7 +798,9 @@ const handleVideoTimeUpdate = (e) => {
                 : "Mark as Completed"}
             </button>
           )}
+          <StudentQuizzes courseId={courseId} />
         </div>
+
 
         <div style={{ flex: 1 }}>
           <h2>Course Content</h2>

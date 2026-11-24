@@ -40,6 +40,8 @@ function CurriculumBuilder() {
   const [lessonResources, setLessonResources] = useState([]);
   const [editedLessonResources, setEditedLessonResources] = useState([]);
   const [uploadingResourceIndex, setUploadingResourceIndex] = useState(null);
+  const [lessonTypeInputs, setLessonTypeInputs] = useState({});
+const [lessonOrderInputs, setLessonOrderInputs] = useState({});
   const handleAddResource = (isEditing = false) => {
   const newResource = { title: "", url: "", type: "other" };
   
@@ -247,8 +249,15 @@ function CurriculumBuilder() {
           },
           body: JSON.stringify({
             title,
-            type: "video",
-            videoKey: lessonVideoInputs[sectionId] || "",
+            type: lessonTypeInputs[sectionId] || "video",
+            order: Number(
+              lessonOrderInputs[sectionId] ?? sections.find(
+                (section) => section._id === sectionId
+              )?.lessons?.length ?? 0
+            ),
+            videoKey: lessonTypeInputs[sectionId] === "quiz"
+              ? ""
+              : lessonVideoInputs[sectionId] || "",
             subtitleUrl: lessonSubtitleInputs[sectionId] || "",
             transcript: lessonTranscriptInputs[sectionId] || "",
             durationSec: 0,
@@ -845,6 +854,21 @@ const handleDeleteFAQ = async (faqId) => {
                     }
                     required
                   />
+                  <select
+                      value={lessonTypeInputs[section._id] || "video"}
+                      onChange={(e) =>
+                        setLessonTypeInputs((prev) => ({
+                          ...prev,
+                          [section._id]: e.target.value,
+                        }))
+                      }
+                    >
+                      <option value="video">Video Lesson</option>
+                      <option value="quiz">Quiz Lesson</option>
+                      <option value="assignment">Assignment Lesson</option>
+                    </select>
+
+                    
                     <p>Create the lesson first, then click Edit to upload its video.</p>
                     <input
                         type="text"
