@@ -2,6 +2,7 @@ const Course = require("../models/Course");
 const Section = require("../models/Section");
 const Lesson = require("../models/Lesson");
 const Enrollment = require("../models/Enrollment");
+const Quiz = require("../models/Quiz");
 
 // Check whether the user can manage this course
 const checkCourseAccess = (course, user) => {
@@ -98,6 +99,19 @@ const getCourseCurriculum = async (req, res) => {
         })
             .sort({ order: 1 })
             .lean();
+        
+            const lessonIds = lessons.map((lesson) => lesson._id);
+
+            const quizzes = await Quiz.find({
+                lesson: { $in: lessonIds },
+                isPublished: true,
+            })
+                .select("-questions.correctAnswer")
+                .lean();
+            
+            const quizMap = new Map(
+                quizzes.map((quiz) => [quiz.lesson.toString(), quiz])
+            );    
 
         const curriculum = sections.map(section => ({
             ...section,
@@ -212,9 +226,17 @@ const deleteSection = async (req, res) => {
 const createLesson = async (req, res) => {
     try {
         const { sectionId } = req.params;
-        const { title, type, durationSec, isPreview, videoKey,subtitleUrl
-            ,transcript, resources } = req.body;
-
+        const {
+            title,
+            type,
+            durationSec,
+            isPreview,
+            videoKey,
+            subtitleUrl,
+            transcript,
+            resources,
+            order: requestedOrder
+        } = req.body;
         if (!title || !title.trim()) {
             return res.status(400).json({
                 success: false,
@@ -241,9 +263,13 @@ const createLesson = async (req, res) => {
         }
 
         const lastLesson = await Lesson.findOne({ section: sectionId })
-            .sort({ order: -1 });
-
-        const order = lastLesson ? lastLesson.order + 1 : 0;
+        .sort({ order: -1 });
+    
+        const order = requestedOrder !== undefined
+        ? Number(requestedOrder)
+        : lastLesson
+            ? lastLesson.order + 1
+            : 0;
 
         const lesson = await Lesson.create({
             section: sectionId,
@@ -507,6 +533,18 @@ const getStudentCourseCurriculum = async (req, res) => {
         })
             .sort({ order: 1 })
             .lean();
+            const lessonIds = lessons.map((lesson) => lesson._id);
+
+                const quizzes = await Quiz.find({
+                    lesson: { $in: lessonIds },
+                    isPublished: true,
+                })
+                    .select("-questions.correctAnswer")
+                    .lean();
+
+                const quizMap = new Map(
+                    quizzes.map((quiz) => [quiz.lesson.toString(), quiz])
+                );
 
             const curriculum = sections.map(section => ({
                 ...section,
@@ -517,7 +555,8 @@ const getStudentCourseCurriculum = async (req, res) => {
                     )
                     .map(({ videoKey, ...lesson }) => ({
                         ...lesson,
-                        hasVideo: Boolean(videoKey)
+                        hasVideo: Boolean(videoKey),
+                        quiz: quizMap.get(lesson._id.toString()) || null
                     }))
             }));
 
