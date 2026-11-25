@@ -85,3 +85,45 @@ export async function uploadLessonResource({ file, lessonId, token }) {
 
   return key;
 }
+
+export const uploadAssignmentFile = async ({
+  file,
+  assignmentId,
+  token
+}) => {
+  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
+  const response = await fetch(`${API_URL}/api/uploads/assignment`, {
+      method: "POST",
+      headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        assignmentId,
+        contentType: file.type,
+        fileSize: file.size
+    })
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+      throw new Error(data.message || "Unable to prepare assignment upload");
+  }
+
+  const { key, token: uploadToken } = data.data;
+
+  const { error } = await supabase.storage
+      .from("assignments")
+      .uploadToSignedUrl(key, uploadToken, file);
+
+  if (error) {
+      throw new Error(error.message || "Assignment file upload failed");
+  }
+
+  return {
+      fileKey: key,
+      fileName: file.name
+  };
+};

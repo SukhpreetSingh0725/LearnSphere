@@ -13,35 +13,15 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Unauthorized from "./pages/Unauthorized";
 import ProtectedRoute from "./components/ProtectedRoute";
-import { useAuth } from "./context/AuthContext";
 import CourseDetails from "./pages/CourseDetails";
 import InstructorDashboard from "./pages/InstructorDashboard";
 import StudentDashboard from "./pages/StudentDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import CoursePlayer from "./pages/CoursePlayer";
+import StudentQuizAttempt from "./pages/StudentQuizAttempt";
+import StudentAssignments from "./pages/StudentAssignments";
 
-// Temporary dashboards — we'll build their actual features later.
-function Dashboard({ role }) {
-  const { user, logout } = useAuth();
 
-  return (
-    <div className="dashboard-container">
-      <h1>{role} Dashboard</h1>
-      <h2>Welcome, {user?.name}!</h2>
-      <p>You are logged in as {user?.role}.</p>
-
-      <button
-        className="view-course-btn"
-        onClick={() => {
-          logout();
-          window.location.href = "/login";
-        }}
-      >
-        Logout
-      </button>
-    </div>
-  );
-}
 
 // Existing LearnSphere homepage
 function Home() {
@@ -204,10 +184,22 @@ function App() {
         <Route path="/student/dashboard"
          element={<StudentDashboard />}
         />
-        
+
           <Route
             path="/learn/:courseId"
             element={<CoursePlayer />}
+          />
+          <Route
+            path="/learn/:courseId/quiz/:quizId"
+            element={<StudentQuizAttempt />}
+          />
+          <Route
+            path="/learn/:courseId/assignments"
+            element={<StudentAssignments />}
+          />
+          <Route
+            path="/learn/:courseId/assignments/:lessonId"
+            element={<StudentAssignments />}
           />
       </Route>
 

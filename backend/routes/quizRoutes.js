@@ -3,7 +3,9 @@ const express = require("express");
 const {
   createQuiz,
   getInstructorQuizzes,
+  getInstructorQuizAttempts,
   getStudentQuizzes,
+  getStudentQuizById,
   submitQuiz,
   toggleQuizPublish,
 } = require("../controllers/quizController");
@@ -28,6 +30,13 @@ router.get(
   getInstructorQuizzes
 );
 
+router.get(
+  "/:quizId/attempts",
+  protect,
+  authorizeRoles("instructor"),
+  getInstructorQuizAttempts
+);
+
 router.patch(
     "/:quizId/publish",
     protect,
@@ -48,6 +57,13 @@ router.post(
   protect,
   authorizeRoles("student"),
   submitQuiz
+);
+
+router.get(
+  "/:quizId",
+  protect,
+  authorizeRoles("student"),
+  getStudentQuizById
 );
 
 module.exports = router;

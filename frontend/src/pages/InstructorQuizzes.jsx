@@ -13,6 +13,7 @@ function InstructorQuizzes() {
   const [description, setDescription] = useState("");
   const [passingScore, setPassingScore] = useState(60);
   const [maxAttempts, setMaxAttempts] = useState(3);
+  const [attemptCooldownHours, setAttemptCooldownHours] = useState(24);
   const [questions, setQuestions] = useState([
     {
       question: "",
@@ -24,6 +25,26 @@ function InstructorQuizzes() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
+  const [activePage, setActivePage] = useState("create");
+  const [viewingQuiz, setViewingQuiz] = useState(null);
+  const [viewingStudent, setViewingStudent] = useState(null);
+  // Your Quizzes filters
+  const [managementCourse, setManagementCourse] = useState("");
+  const [managementSection, setManagementSection] = useState("");
+  const [managementSections, setManagementSections] = useState([]);
+
+  // Student Attempts filters
+  const [attemptCourse, setAttemptCourse] = useState("");
+  const [attemptSection, setAttemptSection] = useState("");
+  const [attemptQuizId, setAttemptQuizId] = useState("");
+  const [attemptSections, setAttemptSections] = useState([]);
+  // Student Attempts data
+const [selectedAttemptQuiz, setSelectedAttemptQuiz] = useState(null);
+const [quizAttemptStudents, setQuizAttemptStudents] = useState([]);
+const [quizAttemptStats, setQuizAttemptStats] = useState(null);
+const [attemptSearch, setAttemptSearch] = useState("");
+const [attemptStatusFilter, setAttemptStatusFilter] = useState("all");
+const [loadingAttempts, setLoadingAttempts] = useState(false);
 
   const fetchData = useCallback(async (ignore = false) => {
     try {
@@ -41,7 +62,7 @@ function InstructorQuizzes() {
       if (!ignore && courseResponse.ok && courseData.success) {
         setCourses(courseData.data);
       }
-      
+
       if (!ignore && quizResponse.ok && quizData.success) {
         setQuizzes(quizData.data);
       }
@@ -56,15 +77,15 @@ function InstructorQuizzes() {
 
     useEffect(() => {
         let ignore = false;
-      
+
         const loadData = async () => {
           if (!token) return;
-      
+
           await fetchData(ignore);
         };
-      
+
         loadData();
-      
+
         return () => {
           ignore = true;
         };
@@ -72,14 +93,14 @@ function InstructorQuizzes() {
 
       useEffect(() => {
         let ignore = false;
-      
+
         const fetchQuizLessons = async () => {
           if (!selectedCourse) {
             setQuizLessons([]);
             setSelectedLesson("");
             return;
           }
-      
+
           try {
             const response = await fetch(
               `http://localhost:5000/api/courses/${selectedCourse}/sections`,
@@ -89,13 +110,13 @@ function InstructorQuizzes() {
                 },
               }
             );
-      
+
             const data = await response.json();
-      
+
             if (!response.ok || !data.success) {
               throw new Error(data.message || "Unable to load lessons.");
             }
-      
+
             const lessons = data.data.flatMap((section) =>
               section.lessons
                 .filter((lesson) => lesson.type === "quiz")
@@ -104,7 +125,7 @@ function InstructorQuizzes() {
                   sectionTitle: section.title,
                 }))
             );
-      
+
             if (!ignore) {
               setQuizLessons(lessons);
               setSelectedLesson("");
@@ -115,13 +136,42 @@ function InstructorQuizzes() {
             }
           }
         };
-      
+
         fetchQuizLessons();
-      
+
         return () => {
           ignore = true;
         };
       }, [selectedCourse, token]);
+
+      const fetchFilterSections = async (courseId, setSectionList) => {
+        if (!courseId) {
+            setSectionList([]);
+            return;
+        }
+
+        try {
+            const response = await fetch(
+                `http://localhost:5000/api/courses/${courseId}/sections`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+
+            const data = await response.json();
+
+            if (!response.ok || !data.success) {
+                throw new Error(data.message || "Unable to load sections.");
+            }
+
+            setSectionList(data.data || []);
+        } catch (error) {
+            setMessage(error.message);
+            setSectionList([]);
+        }
+    };
 
   const addQuestion = () => {
     setQuestions([
@@ -193,6 +243,7 @@ function InstructorQuizzes() {
             lessonId: selectedLesson,
             passingScore: Number(passingScore),
             maxAttempts: Number(maxAttempts),
+            attemptCooldownHours: Number(attemptCooldownHours),
             questions,
           }),
         }
@@ -211,6 +262,7 @@ function InstructorQuizzes() {
       setDescription("");
       setPassingScore(60);
       setMaxAttempts(3);
+      setAttemptCooldownHours(24);
       setQuestions([
         {
           question: "",
@@ -227,42 +279,166 @@ function InstructorQuizzes() {
     }
   };
 
-  const handlePublish = async (quizId) => {
-    try {
+
+const handlePublish = async (quizId) => {
+  const quiz = quizzes.find((item) => item._id === quizId);
+
+  if (!quiz) return;
+
+  const action = quiz.isPublished ? "unpublish" : "publish";
+
+  const confirmed = window.confirm(
+    `Are you sure you want to ${action} "${quiz.title}"?`
+  );
+
+  if (!confirmed) return;
+
+  try {
+    const response = await fetch(
+      `http://localhost:5000/api/quizzes/${quizId}/publish`,
+      {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok || !data.success) {
+      setMessage(data.message || "Unable to update quiz status.");
+      return;
+    }
+
+    setMessage(data.message);
+    await fetchData();
+  } catch {
+    setMessage("Unable to update quiz status.");
+  }
+};
+
+const handleViewQuizAttempts = async (quiz) => {
+  try {
+      setLoadingAttempts(true);
+      setMessage("");
+
+      setSelectedAttemptQuiz(quiz);
+      setActivePage("attempts");
+      setViewingStudent(null);
+
       const response = await fetch(
-        `http://localhost:5000/api/quizzes/${quizId}/publish`,
-        {
-          method: "PATCH",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+          `http://localhost:5000/api/quizzes/${quiz._id}/attempts`,
+          {
+              headers: {
+                  Authorization: `Bearer ${token}`,
+              },
+          }
       );
 
       const data = await response.json();
 
       if (!response.ok || !data.success) {
-        setMessage(data.message || "Unable to update quiz status.");
-        return;
+          throw new Error(data.message || "Unable to load quiz attempts.");
       }
 
-      setMessage(data.message);
-      await fetchData();
-    } catch{
-      setMessage("Unable to update quiz status.");
-    }
-  };
+      setQuizAttemptStudents(data.data || []);
+      setQuizAttemptStats(data.stats || null);
+      setAttemptSearch("");
+      setAttemptStatusFilter("all");
+
+  } catch (error) {
+      setMessage(error.message);
+  } finally {
+      setLoadingAttempts(false);
+  }
+};
+
+const filteredManagementQuizzes = quizzes.filter((quiz) => {
+  const matchesCourse =
+      !managementCourse ||
+      quiz.course?._id === managementCourse;
+
+  const matchesSection =
+      !managementSection ||
+      quiz.lesson?.section?._id === managementSection;
+
+  return matchesCourse && matchesSection;
+});
+
+const filteredAttemptQuizzes = quizzes.filter((quiz) => {
+  const matchesCourse =
+      !attemptCourse ||
+      quiz.course?._id === attemptCourse;
+
+  const matchesSection =
+      !attemptSection ||
+      quiz.lesson?.section?._id === attemptSection;
+
+  return matchesCourse && matchesSection;
+});
 
   if (loading) {
     return <p>Loading quiz management...</p>;
   }
+  const filteredQuizAttemptStudents = quizAttemptStudents.filter((item) => {
+    const studentName = item.student?.name?.toLowerCase() || "";
+    const studentEmail = item.student?.email?.toLowerCase() || "";
+    const search = attemptSearch.toLowerCase();
+
+    const matchesSearch =
+        studentName.includes(search) ||
+        studentEmail.includes(search);
+
+    const matchesStatus =
+        attemptStatusFilter === "all" ||
+        (attemptStatusFilter === "attempted" && item.attempted) ||
+        item.status === attemptStatusFilter;
+
+    return matchesSearch && matchesStatus;
+});
 
   return (
     <section>
-      <h2>Create Quiz</h2>
+      {activePage === "create" && <h2>Create Quiz</h2>}
 
       {message && <p>{message}</p>}
+      <div>
+    <button
+        type="button"
+        onClick={() => {
+            setActivePage("create");
+            setViewingQuiz(null);
+            setViewingStudent(null);
+        }}
+    >
+        Create Quiz
+    </button>
 
+    <button
+        type="button"
+        onClick={() => {
+            setActivePage("quizzes");
+            setViewingQuiz(null);
+            setViewingStudent(null);
+        }}
+    >
+        Your Quizzes
+    </button>
+
+    <button
+        type="button"
+        onClick={() => {
+            setActivePage("attempts");
+            setViewingQuiz(null);
+            setViewingStudent(null);
+        }}
+    >
+        Student Attempts
+    </button>
+</div>
+{activePage === "create" && (
+    <>
       <form onSubmit={handleCreateQuiz}>
         <div>
           <label>Select Course</label>
@@ -343,6 +519,21 @@ function InstructorQuizzes() {
             required
           />
         </div>
+          <div>
+          <label>Cooldown After Exhausting Attempts (Hours)</label>
+          <input
+            type="number"
+            min="0"
+            max="720"
+            value={attemptCooldownHours}
+            onChange={(e) => setAttemptCooldownHours(e.target.value)}
+            required
+          />
+          <small>
+            Students can attempt the quiz again after this waiting period.
+            Enter 0 for no waiting period.
+          </small>
+        </div>
 
         <hr />
 
@@ -406,29 +597,513 @@ function InstructorQuizzes() {
           {saving ? "Creating..." : "Create Quiz"}
         </button>
       </form>
+          </>
+        )}
 
-      <hr />
+{activePage === "quizzes" && (
+    <>
+        <hr />
 
-      <h2>My Quizzes</h2>
+        <h2>Your Quizzes ({filteredManagementQuizzes.length})</h2>
+        <div>
+    <label>Filter by Course</label>
+    <select
+        value={managementCourse}
+        onChange={(e) => {
+            const courseId = e.target.value;
+            setManagementCourse(courseId);
+            setManagementSection("");
+            setViewingQuiz(null);
+            fetchFilterSections(courseId, setManagementSections);
+        }}
+    >
+        <option value="">All Courses</option>
+        {courses.map((course) => (
+            <option key={course._id} value={course._id}>
+                {course.title}
+            </option>
+        ))}
+    </select>
+</div>
 
-      {quizzes.length === 0 ? (
-        <p>No quizzes created yet.</p>
-      ) : (
-        quizzes.map((quiz) => (
-          <div key={quiz._id}>
-            <h3>{quiz.title}</h3>
-            <p>Course: {quiz.course?.title || "Course"}</p>
-            <p>Questions: {quiz.questions.length}</p>
-            <p>Status: {quiz.isPublished ? "Published" : "Draft"}</p>
+<div>
+    <label>Filter by Section</label>
+    <select
+        value={managementSection}
+        onChange={(e) => {
+            setManagementSection(e.target.value);
+            setViewingQuiz(null);
+        }}
+        disabled={!managementCourse}
+    >
+        <option value="">All Sections</option>
+        {managementSections.map((section) => (
+            <option key={section._id} value={section._id}>
+                {section.title}
+            </option>
+        ))}
+    </select>
+</div>
 
-            <button onClick={() => handlePublish(quiz._id)}>
-              {quiz.isPublished ? "Unpublish" : "Publish"}
-            </button>
+{!viewingQuiz && (
+    filteredManagementQuizzes.length === 0 ? (
+    <p>No quizzes found for the selected filters.</p>
+) : (
+    <table>
+        <thead>
+            <tr>
+                <th>Quiz Name</th>
+                <th>Section</th>
+                <th>Lesson</th>
+                <th>Published Date</th>
+                <th>Questions</th>
+                <th>Passing Score</th>
+                <th>Status</th>
+                <th>Action</th>
+            </tr>
+        </thead>
 
-            <hr />
-          </div>
-        ))
-      )}
+        <tbody>
+            {filteredManagementQuizzes.map((quiz) => (
+                <tr key={quiz._id}>
+                    <td>
+                        <button
+                            type="button"
+                            onClick={() => setViewingQuiz(quiz)}
+                        >
+                            {quiz.title}
+                        </button>
+                    </td>
+
+                    <td>{quiz.lesson?.section?.title || "N/A"}</td>
+                    <td>{quiz.lesson?.title || "N/A"}</td>
+
+                    <td>
+                        {quiz.publishedAt
+                            ? new Date(quiz.publishedAt).toLocaleDateString()
+                            : "Not recorded"}
+                    </td>
+
+                    <td>{quiz.questions?.length || 0}</td>
+                    <td>{quiz.passingScore}%</td>
+
+                    <td>
+                        {quiz.isPublished ? "Published" : "Draft"}
+                    </td>
+
+                    <td>
+                        <button
+                            type="button"
+                            onClick={() => handlePublish(quiz._id)}
+                        >
+                            {quiz.isPublished ? "Unpublish" : "Publish"}
+                        </button>
+                    </td>
+                </tr>
+            ))}
+        </tbody>
+    </table>
+    )
+  )}
+
+
+{viewingQuiz && (
+    <div>
+        <button
+            type="button"
+            onClick={() => setViewingQuiz(null)}
+        >
+            Back to Quizzes
+        </button>
+
+        <hr />
+
+        <h2>{viewingQuiz.title}</h2>
+
+        <p>
+            Course: {viewingQuiz.course?.title || "N/A"}
+        </p>
+
+        <p>
+            Section: {viewingQuiz.lesson?.section?.title || "N/A"}
+        </p>
+
+        <p>
+            Lesson: {viewingQuiz.lesson?.title || "N/A"}
+        </p>
+
+        <p>
+            Description: {viewingQuiz.description || "No description"}
+        </p>
+
+        <p>Questions: {viewingQuiz.questions?.length || 0}</p>
+
+        <p>Passing Score: {viewingQuiz.passingScore}%</p>
+
+        <p>Maximum Attempts: {viewingQuiz.maxAttempts}</p>
+
+        <p>
+            Cooldown: {viewingQuiz.attemptCooldownHours} hours
+        </p>
+
+        <p>
+            Status: {viewingQuiz.isPublished ? "Published" : "Draft"}
+        </p>
+
+        <h3>Quiz Questions</h3>
+
+        {viewingQuiz.questions?.map((question, index) => (
+            <div key={index}>
+                <h4>Question {index + 1}: {question.question}</h4>
+
+                {question.options.map((option, optionIndex) => (
+                    <p key={optionIndex}>
+                        Option {optionIndex + 1}: {option}
+                        {question.correctAnswer === optionIndex
+                            ? " ✓ Correct Answer"
+                            : ""}
+                    </p>
+                ))}
+
+                <hr />
+            </div>
+        ))}
+
+        <button
+            type="button"
+            onClick={() => handlePublish(viewingQuiz._id)}
+        >
+            {viewingQuiz.isPublished ? "Unpublish" : "Publish"}
+        </button>
+    </div>
+)}
+    </>
+)}
+
+{activePage === "attempts" && (
+    <div>
+        <hr />
+        <h2>Student Attempts</h2>
+
+        <div>
+            <label>Filter by Course</label>
+            <select
+                value={attemptCourse}
+                onChange={(e) => {
+                    const courseId = e.target.value;
+
+                    setAttemptCourse(courseId);
+                    setAttemptSection("");
+                    setAttemptQuizId("");
+                    setSelectedAttemptQuiz(null);
+                    setQuizAttemptStudents([]);
+                    setQuizAttemptStats(null);
+                    setViewingStudent(null);
+
+                    fetchFilterSections(courseId, setAttemptSections);
+                }}
+            >
+                <option value="">Choose a course</option>
+
+                {courses.map((course) => (
+                    <option key={course._id} value={course._id}>
+                        {course.title}
+                    </option>
+                ))}
+            </select>
+        </div>
+
+        <div>
+            <label>Filter by Section</label>
+            <select
+                value={attemptSection}
+                onChange={(e) => {
+                    setAttemptSection(e.target.value);
+                    setAttemptQuizId("");
+                    setSelectedAttemptQuiz(null);
+                    setQuizAttemptStudents([]);
+                    setQuizAttemptStats(null);
+                    setViewingStudent(null);
+                }}
+                disabled={!attemptCourse}
+            >
+                <option value="">Choose a section</option>
+
+                {attemptSections.map((section) => (
+                    <option key={section._id} value={section._id}>
+                        {section.title}
+                    </option>
+                ))}
+            </select>
+        </div>
+
+        <div>
+            <label>Select Quiz</label>
+            <select
+                value={attemptQuizId}
+                disabled={!attemptSection}
+                onChange={(e) => {
+                    const quizId = e.target.value;
+                    setAttemptQuizId(quizId);
+
+                    const quiz = filteredAttemptQuizzes.find(
+                        (item) => item._id === quizId
+                    );
+
+                    if (quiz) {
+                        handleViewQuizAttempts(quiz);
+                    } else {
+                        setSelectedAttemptQuiz(null);
+                        setQuizAttemptStudents([]);
+                        setQuizAttemptStats(null);
+                    }
+                }}
+            >
+                <option value="">Choose a quiz</option>
+
+                {filteredAttemptQuizzes.map((quiz) => (
+                    <option key={quiz._id} value={quiz._id}>
+                        {quiz.title}
+                    </option>
+                ))}
+                       </select>
+        </div>
+
+        {selectedAttemptQuiz && (
+    <>
+        {!viewingStudent && quizAttemptStats && (
+                    <>
+                        <hr />
+                        <h3>Quiz Performance: {selectedAttemptQuiz.title}</h3>
+
+                        <div
+                            style={{
+                                display: "grid",
+                                gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
+                                gap: "12px",
+                                marginBottom: "20px"
+                            }}
+                        >
+                            {[
+                                {
+                                    label: "Total Students",
+                                    value: quizAttemptStats.totalStudents
+                                },
+                                {
+                                    label: "Attempted",
+                                    value: quizAttemptStats.attempted
+                                },
+                                {
+                                    label: "Not Attempted",
+                                    value: quizAttemptStats.notAttempted
+                                },
+                                {
+                                    label: "Passed",
+                                    value: quizAttemptStats.passed
+                                },
+                                {
+                                    label: "Failed",
+                                    value: quizAttemptStats.failed
+                                },
+                                {
+                                    label: "Total Attempts",
+                                    value: quizAttemptStats.totalAttempts
+                                }
+                            ].map((stat) => (
+                                <div
+                                    key={stat.label}
+                                    style={{
+                                        border: "1px solid #ddd",
+                                        borderRadius: "8px",
+                                        padding: "14px"
+                                    }}
+                                >
+                                    <p>{stat.label}</p>
+                                    <h3>{stat.value ?? 0}</h3>
+                                </div>
+                            ))}
+                        </div>
+                    </>
+                )}
+    <div>
+        {viewingStudent ? (
+            <div>
+                <button
+                    type="button"
+                    onClick={() => setViewingStudent(null)}
+                >
+                    Back to Student List
+                </button>
+
+                <hr />
+
+                <h3>Student Quiz History</h3>
+
+                <h4>{viewingStudent.student.name}</h4>
+                <p>Email: {viewingStudent.student.email}</p>
+                <p>Total Attempts: {viewingStudent.attemptsCount}</p>
+                <p>
+                    Best Score: {viewingStudent.bestScore === null
+                        ? "Not attempted"
+                        : `${viewingStudent.bestScore}%`}
+                </p>
+                <p>
+                    Overall Result: {
+                        viewingStudent.status === "passed"
+                            ? "Passed"
+                            : viewingStudent.status === "failed"
+                                ? "Failed"
+                                : "Not Attempted"
+                    }
+                </p>
+
+                <hr />
+
+                <h3>Attempt History</h3>
+
+                {viewingStudent.attempts.length === 0 ? (
+                    <p>This student has not attempted this quiz yet.</p>
+                ) : (
+                    viewingStudent.attempts.map((attempt) => (
+                        <div key={attempt._id}>
+                            <h4>
+                                Attempt {attempt.attemptNumber}
+                                {" "} (Cycle {attempt.cycleNumber})
+                            </h4>
+
+                            <p>
+                                Submitted: {new Date(
+                                    attempt.submittedAt
+                                ).toLocaleString()}
+                            </p>
+
+                            <p>Score: {attempt.score}%</p>
+
+                            <p>
+                                Result: {attempt.passed ? "Passed" : "Failed"}
+                            </p>
+
+                            <p>
+                                Correct Answers: {
+                                    attempt.answers.filter(
+                                        (answer) => answer.isCorrect
+                                    ).length
+                                } / {attempt.totalQuestions}
+                            </p>
+
+                            <h4>Question-wise Performance</h4>
+
+                            {attempt.answers.map((answer, questionIndex) => (
+                                <div key={answer.questionId}>
+                                    <p>
+                                        **Question {questionIndex + 1}:**
+                                        {" "}{answer.question}
+                                    </p>
+
+                                    <p>
+                                        Selected Answer: {
+                                            answer.selectedAnswerText ?? "Not answered"
+                                        }
+                                    </p>
+
+                                    <p>
+                                        Correct Answer: {answer.correctAnswerText}
+                                    </p>
+
+                                    <p>
+                                        Result: {answer.isCorrect
+                                            ? "Correct"
+                                            : "Incorrect"}
+                                    </p>
+
+                                    <hr />
+                                </div>
+                            ))}
+
+                            <hr />
+                        </div>
+                    ))
+                )}
+            </div>
+        ) : (
+            <>
+                <hr />
+                <h3>Student Performance</h3>
+
+                <input
+                    type="text"
+                    placeholder="Search student by name or email"
+                    value={attemptSearch}
+                    onChange={(e) => setAttemptSearch(e.target.value)}
+                />
+
+                <select
+                    value={attemptStatusFilter}
+                    onChange={(e) => setAttemptStatusFilter(e.target.value)}
+                >
+                    <option value="all">All Students</option>
+                    <option value="attempted">Attempted</option>
+                    <option value="not_attempted">Not Attempted</option>
+                    <option value="passed">Passed</option>
+                    <option value="failed">Failed</option>
+                </select>
+
+                {loadingAttempts ? (
+                    <p>Loading students...</p>
+                ) : filteredQuizAttemptStudents.length === 0 ? (
+                    <p>No students found.</p>
+                ) : (
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Student Name</th>
+                                <th>Email</th>
+                                <th>Attempts</th>
+                                <th>Best Score</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            {filteredQuizAttemptStudents.map((item) => (
+                                <tr key={item.student._id}>
+                                    <td>{item.student.name}</td>
+                                    <td>{item.student.email}</td>
+                                    <td>{item.attemptsCount}</td>
+                                    <td>
+                                        {item.bestScore === null
+                                            ? "Not attempted"
+                                            : `${item.bestScore}%`}
+                                    </td>
+                                    <td>
+                                        {item.status === "not_attempted"
+                                            ? "Not Attempted"
+                                            : item.status === "passed"
+                                                ? "Passed"
+                                                : "Failed"}
+                                    </td>
+                                    <td>
+                                        <button
+                                            type="button"
+                                            onClick={() => setViewingStudent(item)}
+                                        >
+                                            View Details
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                )}
+            </>
+        )}
+        </div>
+    </>
+)}
+    </div>
+)}
+
     </section>
   );
 }

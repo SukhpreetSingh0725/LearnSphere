@@ -4,6 +4,7 @@ const { supabase, BUCKET } = require("../config/storage");
 const Lesson = require("../models/Lesson");
 const Section = require("../models/Section");
 const Course = require("../models/Course");
+const Enrollment = require("../models/Enrollment");
 
 const ALLOWED_TYPES = {
     "video/mp4": "mp4",
@@ -123,7 +124,106 @@ const createResourceUploadUrl = async (req, res) => {
     });
 };
 
+
+// POST /api/uploads/assignment
+const createAssignmentUploadUrl = async (req, res) => {
+    try {
+        const { assignmentId, contentType, fileSize } = req.body;
+
+        const ALLOWED_ASSIGNMENT_TYPES = {
+            "application/pdf": "pdf",
+            "application/msword": "doc",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "docx",
+            "application/zip": "zip",
+            "application/x-zip-compressed": "zip"
+        };
+
+        const ext = ALLOWED_ASSIGNMENT_TYPES[contentType];
+
+        if (!assignmentId || !ext) {
+            return res.status(400).json({
+                success: false,
+                message: "A valid assignmentId and file type are required"
+            });
+        }
+
+        const Assignment = require("../models/Assignment");
+
+        const assignment = await Assignment.findOne({
+            _id: assignmentId,
+            isPublished: true
+        });
+
+        if (!assignment) {
+            return res.status(404).json({
+                success: false,
+                message: "Assignment not found or not published"
+            });
+        }
+        if (
+            !Number.isFinite(fileSize) ||
+            fileSize <= 0 ||
+            fileSize > assignment.maxFileSizeMB * 1024 * 1024
+        ) {
+            return res.status(400).json({
+                success: false,
+                message: `File size must not exceed ${assignment.maxFileSizeMB} MB`
+            });
+        }
+
+        const extension = ALLOWED_ASSIGNMENT_TYPES[contentType];
+
+            if (!assignment.allowedFileTypes.includes(extension)) {
+                return res.status(400).json({
+                    success: false,
+                    message: "This file type is not allowed for this assignment"
+                });
+            }
+
+        const enrollment = await Enrollment.findOne({
+            student: req.user._id,
+            course: assignment.course,
+            status: { $in: ["active", "completed"] }
+        });
+
+        if (!enrollment) {
+            return res.status(403).json({
+                success: false,
+                message: "You must be enrolled in this course to upload a submission"
+            });
+        }
+
+        const key = `${assignment.course}/${assignment._id}/${req.user._id}/${crypto.randomUUID()}.${ext}`;
+
+        const { data, error } = await supabase.storage
+            .from("assignments")
+            .createSignedUploadUrl(key);
+
+        if (error) {
+            return res.status(500).json({
+                success: false,
+                message: error.message
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            data: {
+                key,
+                token: data.token
+            }
+        });
+
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+};
+
 module.exports = {
     createVideoUploadUrl,
-    createResourceUploadUrl
+    createResourceUploadUrl,
+    createAssignmentUploadUrl
 };

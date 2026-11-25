@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import StudentQuizzes from "../components/StudentQuizzes";
+
 
 const parseTranscript = (transcript = "") => {
   return transcript
@@ -32,6 +32,7 @@ const parseTranscript = (transcript = "") => {
 
 function CoursePlayer() {
   const { courseId } = useParams();
+  const navigate = useNavigate();
   const { token } = useAuth();
   const videoRef = useRef(null);
   const resumeAtRef = useRef(0);
@@ -416,7 +417,7 @@ const handleVideoTimeUpdate = (e) => {
   const handleResourceDownload = async (resource) => {
     try {
       setDownloadingResource(resource.url);
-  
+
       const response = await fetch(
        `${API}/api/lessons/${activeLesson._id}/resource-url?key=${encodeURIComponent(resource.url)}`,
         {
@@ -425,13 +426,13 @@ const handleVideoTimeUpdate = (e) => {
           },
         }
       );
-  
+
       const data = await response.json();
-  
+
       if (!response.ok) {
         throw new Error(data.message || "Unable to download resource");
       }
-  
+
       window.open(data.data.url, "_blank", "noopener,noreferrer");
     } catch (error) {
       alert(error.message);
@@ -527,7 +528,7 @@ const handleVideoTimeUpdate = (e) => {
               onTimeUpdate={handleVideoTimeUpdate}
               onPause={(e) => {
                 const position = e.currentTarget.currentTime;
-              
+
                 if (activeLesson) {
                   lastSavedPositionRef.current = position;
                   savePlaybackPosition(activeLesson._id, position);
@@ -777,7 +778,7 @@ const handleVideoTimeUpdate = (e) => {
             )}
           </div>
 
-          {activeLesson && (
+          {activeLesson && activeLesson.type !== "quiz" && (
             <button
               onClick={handleCompleteLesson}
               disabled={saving}
@@ -798,7 +799,6 @@ const handleVideoTimeUpdate = (e) => {
                 : "Mark as Completed"}
             </button>
           )}
-          <StudentQuizzes courseId={courseId} />
         </div>
 
 
@@ -817,7 +817,22 @@ const handleVideoTimeUpdate = (e) => {
                 return (
                   <button
                     key={lesson._id}
-                    onClick={() => handleSelectLesson(lesson)}
+                    onClick={() => {
+                      if (lesson.type === "quiz") {
+                        if (lesson.quiz?._id) {
+                          navigate(`/learn/${courseId}/quiz/${lesson.quiz._id}`);
+                        } else {
+                          alert("This quiz is not published yet.");
+                        }
+                        return;
+                      }
+                      if (lesson.type === "assignment") {
+                        navigate(`/learn/${courseId}/assignments/${lesson._id}`);
+                        return;
+                      }
+
+                      handleSelectLesson(lesson);
+                    }}
                     style={{
                       display: "block",
                       width: "100%",

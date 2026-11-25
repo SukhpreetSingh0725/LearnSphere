@@ -155,12 +155,19 @@ const updateLessonProgress = async (req, res) => {
       });
     }
 
+    if (lesson.type === "quiz" && completed !== undefined) {
+      return res.status(403).json({
+        success: false,
+        message: "Quiz lessons can only be completed by passing the quiz"
+      });
+    }
+
     const update = {
       $set: {
         lastLesson: lessonId
       }
     };
-    
+
     if (lastPosition !== undefined) {
       update.$set.lastPosition = lastPosition;
     }

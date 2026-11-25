@@ -59,9 +59,19 @@ const quizSchema = new mongoose.Schema(
       default: 3,
       min: 1,
     },
+    attemptCooldownHours: {
+      type: Number,
+      default: 24,
+      min: 0,
+      max: 720,
+    },
     isPublished: {
       type: Boolean,
       default: false,
+    },
+    publishedAt: {
+      type: Date,
+      default: null,
     },
   },
   { timestamps: true }

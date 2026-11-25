@@ -8,6 +8,7 @@ import Students from "./Students";
 import InstructorAnalytics from "./InstructorAnalytics";
 import InstructorSettings from "./InstructorSettings";
 import InstructorQuizzes from "./InstructorQuizzes";
+import InstructorAssignments from "./InstructorAssignments";
 
 function InstructorDashboard() {
   const { token } = useAuth();
@@ -53,6 +54,7 @@ useEffect(() => {
     "Create Course",
     "Curriculum Builder",
     "Quiz Management",
+    "Assignment Management",
     "Students",
     "Analytics",
     "Settings",
@@ -153,6 +155,7 @@ useEffect(() => {
           {activeTab === "Create Course" && <CreateCourse />}
           {activeTab === "Curriculum Builder" && <CurriculumBuilder />}
           {activeTab === "Quiz Management" && <InstructorQuizzes />}
+          {activeTab === "Assignment Management" && <InstructorAssignments />}
           {activeTab === "Students" && <Students />}
           {activeTab === "Analytics" && <InstructorAnalytics />}
           {activeTab === "Settings" && <InstructorSettings />}

@@ -3,6 +3,7 @@ const Section = require("../models/Section");
 const Lesson = require("../models/Lesson");
 const Enrollment = require("../models/Enrollment");
 const Quiz = require("../models/Quiz");
+const Assignment = require("../models/Assignment");
 
 // Check whether the user can manage this course
 const checkCourseAccess = (course, user) => {
@@ -99,7 +100,7 @@ const getCourseCurriculum = async (req, res) => {
         })
             .sort({ order: 1 })
             .lean();
-        
+
             const lessonIds = lessons.map((lesson) => lesson._id);
 
             const quizzes = await Quiz.find({
@@ -108,10 +109,10 @@ const getCourseCurriculum = async (req, res) => {
             })
                 .select("-questions.correctAnswer")
                 .lean();
-            
+
             const quizMap = new Map(
                 quizzes.map((quiz) => [quiz.lesson.toString(), quiz])
-            );    
+            );
 
         const curriculum = sections.map(section => ({
             ...section,
@@ -264,7 +265,7 @@ const createLesson = async (req, res) => {
 
         const lastLesson = await Lesson.findOne({ section: sectionId })
         .sort({ order: -1 });
-    
+
         const order = requestedOrder !== undefined
         ? Number(requestedOrder)
         : lastLesson
@@ -546,19 +547,36 @@ const getStudentCourseCurriculum = async (req, res) => {
                     quizzes.map((quiz) => [quiz.lesson.toString(), quiz])
                 );
 
-            const curriculum = sections.map(section => ({
-                ...section,
-                lessons: lessons
-                    .filter(
-                        lesson =>
-                            lesson.section.toString() === section._id.toString()
-                    )
-                    .map(({ videoKey, ...lesson }) => ({
-                        ...lesson,
-                        hasVideo: Boolean(videoKey),
-                        quiz: quizMap.get(lesson._id.toString()) || null
-                    }))
-            }));
+                const publishedAssignments = await Assignment.find({
+                    lesson: { $in: lessonIds },
+                    isPublished: true
+                }).select("lesson").lean();
+
+                const assignmentMap = new Set(
+                    publishedAssignments.map((assignment) => assignment.lesson.toString())
+                );
+
+                const curriculum = sections.map(section => ({
+                    ...section,
+                    lessons: lessons
+                        .filter(
+                            lesson =>
+                                lesson.section.toString() === section._id.toString() &&
+                                (
+                                    lesson.type !== "quiz" ||
+                                    quizMap.has(lesson._id.toString())
+                                ) &&
+                                (
+                                    lesson.type !== "assignment" ||
+                                    assignmentMap.has(lesson._id.toString())
+                                )
+                        )
+                        .map(({ videoKey, ...lesson }) => ({
+                            ...lesson,
+                            hasVideo: Boolean(videoKey),
+                            quiz: quizMap.get(lesson._id.toString()) || null
+                        }))
+                }));
 
         res.status(200).json({
             success: true,

@@ -40,6 +40,10 @@ const quizAttemptSchema = new mongoose.Schema(
       type: Number,
       required: true,
     },
+    cycleNumber: {
+       type: Number,
+       default: 1
+    },
     submittedAt: {
       type: Date,
       default: Date.now,
