@@ -8,6 +8,7 @@ const {
   getStudentQuizById,
   submitQuiz,
   toggleQuizPublish,
+  updateQuiz,
 } = require("../controllers/quizController");
 
 const { protect } = require("../middleware/authMiddleware");
@@ -42,6 +43,13 @@ router.patch(
     protect,
     authorizeRoles("instructor"),
     toggleQuizPublish
+  );
+
+  router.patch(
+    "/:quizId",
+    protect,
+    authorizeRoles("instructor"),
+    updateQuiz
   );
 
 // Student routes
