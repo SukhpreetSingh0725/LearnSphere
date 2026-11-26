@@ -26,17 +26,18 @@ function CurriculumBuilder() {
   const [editedLessonVideo, setEditedLessonVideo] = useState("");
   const [uploadingVideo, setUploadingVideo] = useState(false);
   const [uploadMessage, setUploadMessage] = useState("");
-  const [lessonSubtitleInputs, setLessonSubtitleInputs] = useState({});
-  const [lessonTranscriptInputs, setLessonTranscriptInputs] = useState({});
   const [editedLessonSubtitle, setEditedLessonSubtitle] = useState("");
   const [editedLessonTranscript, setEditedLessonTranscript] = useState("");
   const [faqs, setFaqs] = useState([]);
+  const [currentFAQPage, setCurrentFAQPage] = useState(1);
+  const faqsPerPage = 5;
   const [faqQuestion, setFaqQuestion] = useState("");
   const [faqAnswer, setFaqAnswer] = useState("");
   const [editingFAQ, setEditingFAQ] = useState(null);
   const [editedFAQQuestion, setEditedFAQQuestion] = useState("");
   const [editedFAQAnswer, setEditedFAQAnswer] = useState("");
   const [savingFAQ, setSavingFAQ] = useState(false);
+  const [showFAQForm, setShowFAQForm] = useState(false);
   const [lessonResources, setLessonResources] = useState([]);
   const [editedLessonResources, setEditedLessonResources] = useState([]);
   const [uploadingResourceIndex, setUploadingResourceIndex] = useState(null);
@@ -258,8 +259,6 @@ const [lessonOrderInputs, setLessonOrderInputs] = useState({});
             videoKey: lessonTypeInputs[sectionId] === "quiz"
               ? ""
               : lessonVideoInputs[sectionId] || "",
-            subtitleUrl: lessonSubtitleInputs[sectionId] || "",
-            transcript: lessonTranscriptInputs[sectionId] || "",
             durationSec: 0,
             isPreview: false,
           }),
@@ -280,16 +279,6 @@ const [lessonOrderInputs, setLessonOrderInputs] = useState({});
         ...prev,
         [sectionId]: "",
       }));
-      setLessonSubtitleInputs((prev) => ({
-        ...prev,
-        [sectionId]: "",
-      }));
-      
-      setLessonTranscriptInputs((prev) => ({
-        ...prev,
-        [sectionId]: "",
-      }));
-  
       await fetchCurriculum(selectedCourse);
     } catch (err) {
       setError(err.message);
@@ -515,6 +504,8 @@ const handleCreateFAQ = async (e) => {
       setFaqAnswer("");
 
       await fetchFAQs(selectedCourse);
+      setCurrentFAQPage(1);
+      setShowFAQForm(false);
 
   } catch (error) {
       setError(error.message);
@@ -599,6 +590,15 @@ const handleDeleteFAQ = async (faqId) => {
       setError(error.message);
   }
 };
+
+const totalFAQPages = Math.ceil(faqs.length / faqsPerPage);
+
+const startFAQIndex = (currentFAQPage - 1) * faqsPerPage;
+
+const currentFAQs = faqs.slice(
+  startFAQIndex,
+  startFAQIndex + faqsPerPage
+);
 
   return (
     <div className="curriculum-builder">
@@ -870,29 +870,7 @@ const handleDeleteFAQ = async (faqId) => {
 
                     
                     <p>Create the lesson first, then click Edit to upload its video.</p>
-                    <input
-                        type="text"
-                        placeholder="Enter subtitle URL (.vtt)"
-                        value={lessonSubtitleInputs[section._id] || ""}
-                        onChange={(e) =>
-                          setLessonSubtitleInputs((prev) => ({
-                            ...prev,
-                            [section._id]: e.target.value,
-                          }))
-                        }
-                    />
-
-                    <textarea
-                        placeholder="Enter timestamped transcript (e.g. 00:00:05 Welcome!)"
-                        value={lessonTranscriptInputs[section._id] || ""}
-                        onChange={(e) =>
-                          setLessonTranscriptInputs((prev) => ({
-                            ...prev,
-                            [section._id]: e.target.value,
-                          }))
-                        }
-                        rows={5}
-                    />
+              
               
                   <button type="submit" disabled={creatingLesson}>
                     {creatingLesson ? "Adding..." : "Add Lesson"}
@@ -905,105 +883,170 @@ const handleDeleteFAQ = async (faqId) => {
 
 {/* FAQ Management */}
 <div className="course-faq-manager">
-  <h3>Course FAQs</h3>
-  <p>Manage frequently asked questions for your students.</p>
+  <div className="faq-manager-header">
+    <div>
+      <h3>Course FAQs</h3>
+      <p>Manage frequently asked questions for your students.</p>
+    </div>
 
-  <form onSubmit={handleCreateFAQ} className="faq-create-form">
-    <input
-      type="text"
-      placeholder="Enter FAQ question"
-      value={faqQuestion}
-      onChange={(e) => setFaqQuestion(e.target.value)}
-      maxLength={300}
-      required
-    />
-
-    <textarea
-      placeholder="Enter FAQ answer"
-      value={faqAnswer}
-      onChange={(e) => setFaqAnswer(e.target.value)}
-      maxLength={2000}
-      required
-    />
-
-    <button type="submit" disabled={savingFAQ}>
-      {savingFAQ ? "Adding..." : "Add FAQ"}
+    <button
+      type="button"
+      className="faq-add-btn"
+      onClick={() => {
+        setShowFAQForm(!showFAQForm);
+        setEditingFAQ(null);
+        setFaqQuestion("");
+        setFaqAnswer("");
+      }}
+    >
+      {showFAQForm ? "Cancel" : "+ Add FAQ"}
     </button>
-  </form>
+  </div>
 
+  {showFAQForm && (
+    <form onSubmit={handleCreateFAQ} className="faq-create-form">
+      <h4>Add New FAQ</h4>
+
+      <label>Question</label>
+      <input
+        type="text"
+        placeholder="Enter FAQ question"
+        value={faqQuestion}
+        onChange={(e) => setFaqQuestion(e.target.value)}
+        maxLength={300}
+        required
+      />
+
+      <label>Answer</label>
+      <textarea
+        placeholder="Enter FAQ answer"
+        value={faqAnswer}
+        onChange={(e) => setFaqAnswer(e.target.value)}
+        maxLength={2000}
+        rows={4}
+        required
+      />
+
+      <button type="submit" disabled={savingFAQ}>
+        {savingFAQ ? "Adding..." : "Save FAQ"}
+      </button>
+    </form>
+  )}
+
+{!showFAQForm && (
   <div className="faq-management-list">
     {faqs.length === 0 ? (
-      <p>No FAQs added yet.</p>
+      <p className="faq-empty-message">No FAQs added yet.</p>
     ) : (
-      faqs.map((faq) => (
+      currentFAQs
+  .filter((faq) => !editingFAQ || faq._id === editingFAQ)
+  .map((faq, index) => (
         <div className="faq-management-item" key={faq._id}>
           {editingFAQ === faq._id ? (
             <div className="faq-edit-form">
+              <h4>Edit FAQ</h4>
+
+              <label>Question</label>
               <input
                 type="text"
                 value={editedFAQQuestion}
-                onChange={(e) =>
-                  setEditedFAQQuestion(e.target.value)
-                }
+                onChange={(e) => setEditedFAQQuestion(e.target.value)}
                 maxLength={300}
               />
 
+              <label>Answer</label>
               <textarea
                 value={editedFAQAnswer}
-                onChange={(e) =>
-                  setEditedFAQAnswer(e.target.value)
-                }
+                onChange={(e) => setEditedFAQAnswer(e.target.value)}
                 maxLength={2000}
+                rows={4}
               />
 
-              <button
-                type="button"
-                disabled={savingFAQ}
-                onClick={() => handleUpdateFAQ(faq._id)}
-              >
-                Save
-              </button>
+              <div className="faq-item-actions">
+                <button
+                  type="button"
+                  className="faq-save-btn"
+                  disabled={savingFAQ}
+                  onClick={() => handleUpdateFAQ(faq._id)}
+                >
+                  {savingFAQ ? "Saving..." : "Save Changes"}
+                </button>
 
-              <button
-                type="button"
-                onClick={() => {
-                  setEditingFAQ(null);
-                  setEditedFAQQuestion("");
-                  setEditedFAQAnswer("");
-                }}
-              >
-                Cancel
-              </button>
+                <button
+                  type="button"
+                  className="faq-cancel-btn"
+                  onClick={() => {
+                    setEditingFAQ(null);
+                    setEditedFAQQuestion("");
+                    setEditedFAQAnswer("");
+                  }}
+                >
+                  Cancel
+                </button>
+              </div>
             </div>
           ) : (
             <>
-              <h4>{faq.question}</h4>
-              <p>{faq.answer}</p>
+              <div className="faq-item-content">
+              <span className="faq-number">FAQ {startFAQIndex + index + 1}</span>
+                <h4>{faq.question}</h4>
+                <p>{faq.answer}</p>
+              </div>
 
-              <button
-                type="button"
-                onClick={() => {
-                  setEditingFAQ(faq._id);
-                  setEditedFAQQuestion(faq.question);
-                  setEditedFAQAnswer(faq.answer);
-                }}
-              >
-                Edit
-              </button>
+              <div className="faq-item-actions">
+                <button
+                  type="button"
+                  className="faq-edit-btn"
+                  onClick={() => {
+                    setShowFAQForm(false);
+                    setEditingFAQ(faq._id);
+                    setEditedFAQQuestion(faq.question);
+                    setEditedFAQAnswer(faq.answer);
+                  }}
+                >
+                  Edit
+                </button>
 
-              <button
-                type="button"
-                onClick={() => handleDeleteFAQ(faq._id)}
-              >
-                Delete
-              </button>
+                <button
+                  type="button"
+                  className="faq-delete-btn"
+                  onClick={() => handleDeleteFAQ(faq._id)}
+                >
+                  Delete
+                </button>
+              </div>
             </>
           )}
         </div>
-      ))
+          ))
+        )}
+    
+        {totalFAQPages > 1 && !editingFAQ && (
+          <div className="faq-pagination">
+            <button
+              type="button"
+              disabled={currentFAQPage === 1}
+              onClick={() => setCurrentFAQPage((prev) => prev - 1)}
+            >
+              Previous
+            </button>
+    
+            <span>
+              Page {currentFAQPage} of {totalFAQPages}
+            </span>
+    
+            <button
+              type="button"
+              disabled={currentFAQPage === totalFAQPages}
+              onClick={() => setCurrentFAQPage((prev) => prev + 1)}
+            >
+              Next
+            </button>
+          </div>
+        )}
+      </div>
     )}
-  </div>
-  </div>
+    </div>
 </>
 )}
 </div>
