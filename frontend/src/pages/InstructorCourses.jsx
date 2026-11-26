@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import "./InstructorCourses.css";
 import { useAuth } from "../context/AuthContext";
 
-function InstructorCourses() {
+function InstructorCourses({ onCreateCourse }) {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(false);
   const [editingCourse, setEditingCourse] = useState(null);
@@ -198,9 +198,12 @@ const handleUpdateCourse = async () => {
           <p>Manage and track all your courses.</p>
         </div>
 
-        <button className="create-course-btn">
-          + Create New Course
-        </button>
+        <button
+  className="create-course-btn"
+  onClick={onCreateCourse}
+>
+  + Create New Course
+</button>
       </div>
 
       <div className="courses-summary">
