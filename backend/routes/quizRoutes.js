@@ -9,6 +9,7 @@ const {
   submitQuiz,
   toggleQuizPublish,
   updateQuiz,
+  deleteQuiz,
 } = require("../controllers/quizController");
 
 const { protect } = require("../middleware/authMiddleware");
@@ -50,6 +51,13 @@ router.patch(
     protect,
     authorizeRoles("instructor"),
     updateQuiz
+  );
+
+  router.delete(
+    "/:quizId",
+    protect,
+    authorizeRoles("instructor"),
+    deleteQuiz
   );
 
 // Student routes
