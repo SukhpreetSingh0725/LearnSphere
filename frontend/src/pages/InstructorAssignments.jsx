@@ -1,6 +1,6 @@
-
 import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
+import "./InstructorAssignments.css";
 
 function InstructorAssignments() {
     const { token } = useAuth();
@@ -373,15 +373,16 @@ function InstructorAssignments() {
     });
 
     return (
-        <div>
+        <div className="instructor-assignments">
             <h2>Assignment Management</h2>
 
             {error && <p>{error}</p>}
                     {message && <p>{message}</p>}
 
-                    <div>
+                    <div className="assignment-navigation">
                         <button
                             type="button"
+                            className={`assignment-nav-btn ${activePage === "create" ? "active" : ""}`}
                             onClick={() => {
                                 setActivePage("create");
                                 setViewingAssignment(null);
@@ -393,6 +394,7 @@ function InstructorAssignments() {
 
                         <button
                             type="button"
+                            className={`assignment-nav-btn ${activePage === "assignments" ? "active" : ""}`}
                             onClick={() => {
                                 setActivePage("assignments");
                                 setViewingAssignment(null);
@@ -404,6 +406,7 @@ function InstructorAssignments() {
 
                         <button
                             type="button"
+                            className={`assignment-nav-btn ${activePage === "submissions" ? "active" : ""}`}
                             onClick={() => {
                                 setActivePage("submissions");
                                 setViewingAssignment(null);
@@ -416,8 +419,7 @@ function InstructorAssignments() {
                     {activePage === "create" && (
                     <>
                         <h3>Create Assignment</h3>
-
-            <form onSubmit={handleCreateAssignment}>
+                        <form className="assignment-form" onSubmit={handleCreateAssignment}>
                 <div>
                     <label>Select Course</label>
                     <select
@@ -530,54 +532,57 @@ function InstructorAssignments() {
                 {activePage === "assignments" && (
                     <>
                         <hr />
+                        <div className="assignment-list-section">
+                            <h3>Your Assignments ({filteredManagementAssignments.length})</h3>
 
-                        <h3>Your Assignments ({filteredManagementAssignments.length})</h3>
+                            <div className="assignment-filters">
+                                <div>
+                                    <label>Filter by Course</label>
+                                    <select
+                                        value={managementCourse}
+                                        onChange={(e) => {
+                                            const courseId = e.target.value;
+                                            setManagementCourse(courseId);
+                                            setManagementSection("");
+                                            fetchFilterSections(courseId, setManagementSections);
+                                            setViewingAssignment(null);
+                                        }}
+                                    >
+                                        <option value="">All Courses</option>
+                                        {courses.map((course) => (
+                                            <option key={course._id} value={course._id}>
+                                                {course.title}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
 
-                        <div>
-                        <label>Filter by Course</label>
-                        <select
-                            value={managementCourse}
-                            onChange={(e) => {
-                                const courseId = e.target.value;
-                                setManagementCourse(courseId);
-                                setManagementSection("");
-                                fetchFilterSections(courseId, setManagementSections);
-                                setViewingAssignment(null);
-                            }}
-                        >
-                            <option value="">All Courses</option>
-                            {courses.map((course) => (
-                                <option key={course._id} value={course._id}>
-                                    {course.title}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-
-                    <div>
-                        <label>Filter by Section</label>
-                        <select
-                            value={managementSection}
-                            onChange={(e) => {
-                                setManagementSection(e.target.value);
-                                setViewingAssignment(null);
-                            }}
-                            disabled={!managementCourse}
-                        >
-                            <option value="">All Sections</option>
-                            {managementSections.map((section) => (
-                                <option key={section._id} value={section._id}>
-                                    {section.title}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
+                                <div>
+                                    <label>Filter by Section</label>
+                                    <select
+                                        value={managementSection}
+                                        onChange={(e) => {
+                                            setManagementSection(e.target.value);
+                                            setViewingAssignment(null);
+                                        }}
+                                        disabled={!managementCourse}
+                                    >
+                                        <option value="">All Sections</option>
+                                        {managementSections.map((section) => (
+                                            <option key={section._id} value={section._id}>
+                                                {section.title}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
 
                     {!viewingAssignment && (
-    filteredManagementAssignments.length === 0 ? (
+                    filteredManagementAssignments.length === 0 ? (
                         <p>No assignments found for the selected filters.</p>
                     ) : (
-                        <table>
+                        <table className="assignment-table">
                             <thead>
                                 <tr>
                                     <th>Assignment Name</th>
@@ -635,56 +640,60 @@ function InstructorAssignments() {
                     )}
 
                         {viewingAssignment && (
-                            <div>
+                         <div className="assignment-details">
                                 <button
                                     type="button"
+                                    className="assignment-back-btn"
                                     onClick={() => setViewingAssignment(null)}
                                 >
                                     Back to Assignments
                                 </button>
 
-                                <h3>{viewingAssignment.title}</h3>
+                                <h3 className="assignment-details-title">
+                                    {viewingAssignment.title}
+                                </h3>
 
-                                <p>
+                                <p className="assignment-detail-item">
                                     Course: {viewingAssignment.course?.title}
                                 </p>
 
-                                <p>
+                                <p className="assignment-detail-item">
                                     Section: {viewingAssignment.lesson?.section?.title || "Not available"}
                                 </p>
 
-                                <p>
+                                <p className="assignment-detail-item">
                                     Lesson: {viewingAssignment.lesson?.title}
                                 </p>
 
-                                <p>
+                                <p className="assignment-detail-item">
                                     Description: {viewingAssignment.description}
                                 </p>
 
-                                <p>
+                                <p className="assignment-detail-item">
                                     Instructions: {viewingAssignment.instructions || "No instructions"}
                                 </p>
 
-                                <p>
+                                <p className="assignment-detail-item">
                                     Due Date: {viewingAssignment.dueDate
                                         ? new Date(viewingAssignment.dueDate).toLocaleString()
                                         : "No deadline"}
                                 </p>
 
-                                <p>Maximum Marks: {viewingAssignment.maxMarks}</p>
+                                <p className="assignment-detail-item">Maximum Marks: {viewingAssignment.maxMarks}</p>
 
-                                <p>Maximum File Size: {viewingAssignment.maxFileSizeMB} MB</p>
+                                <p className="assignment-detail-item">Maximum File Size: {viewingAssignment.maxFileSizeMB} MB</p>
 
-                                <p>
+                                <p className="assignment-detail-item">
                                     Allowed File Types: {viewingAssignment.allowedFileTypes?.join(", ")}
                                 </p>
 
-                                <p>
+                                <p className="assignment-detail-item">
                                     Status: {viewingAssignment.isPublished ? "Published" : "Draft"}
                                 </p>
 
                                 <button
                                     type="button"
+                                    className="assignment-publish-btn"
                                     onClick={() => handleTogglePublish(viewingAssignment._id)}
                                 >
                                     {viewingAssignment.isPublished ? "Unpublish" : "Publish"}
@@ -694,11 +703,11 @@ function InstructorAssignments() {
                     </>
                 )}
                 {activePage === "submissions" && !viewingStudent && (
-                    <div>
+                    <div className="assignment-submissions-section">
                         <hr />
                         <h3>Student Submissions</h3>
 
-                        <div>
+                        <div className="submission-filter-item">
                             <label>Filter by Course</label>
                             <select
                                 value={submissionCourse}
@@ -724,7 +733,7 @@ function InstructorAssignments() {
                             </select>
                         </div>
 
-                        <div>
+                        <div className="submission-filter-item">
                             <label>Filter by Section</label>
                             <select
                                 value={submissionSection}
@@ -746,7 +755,7 @@ function InstructorAssignments() {
                             </select>
                         </div>
 
-                        <div>
+                        <div className="submission-filter-item">
                             <label>Select Assignment</label>
                             <select
                                 value={submissionAssignmentId}
@@ -788,7 +797,7 @@ function InstructorAssignments() {
                 )}
 
 {activePage === "submissions" && showSubmissionResults && selectedAssignment && (
-                    <div>
+                   <div className="submission-results-section">
                         {!viewingStudent && (
                             <>
                         <hr />
@@ -798,14 +807,8 @@ function InstructorAssignments() {
                             <div>
                                 <h4>Assignment Overview</h4>
 
-                                <div
-                                    style={{
-                                        display: "grid",
-                                        gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
-                                        gap: "12px",
-                                        marginBottom: "20px"
-                                    }}
-                                >
+                                <div className="assignment-stats-grid">
+                                
                                     {[
                                         {
                                             label: "Total Students",
@@ -832,14 +835,7 @@ function InstructorAssignments() {
                                             value: assignmentStats.revisionRequested
                                         }
                                     ].map((stat) => (
-                                        <div
-                                            key={stat.label}
-                                            style={{
-                                                border: "1px solid #ddd",
-                                                borderRadius: "8px",
-                                                padding: "14px"
-                                            }}
-                                        >
+                                        <div className="assignment-stat-card" key={stat.label}>
                                             <p>{stat.label}</p>
                                             <h3>{stat.value ?? 0}</h3>
                                         </div>
@@ -854,6 +850,7 @@ function InstructorAssignments() {
 
                         <input
                             type="text"
+                            className="submission-search"
                             placeholder="Search student by name or email"
                             value={studentSearch}
                             onChange={(e) => setStudentSearch(e.target.value)}
@@ -861,6 +858,7 @@ function InstructorAssignments() {
 
                         <select
                             value={statusFilter}
+                            className="submission-status-filter"
                             onChange={(e) => setStatusFilter(e.target.value)}
                         >
                             <option value="all">All Students</option>
@@ -873,6 +871,7 @@ function InstructorAssignments() {
 
                         <button
                             type="button"
+                            className="close-submissions-btn"
                             onClick={() => {
                                 setShowSubmissionResults(false);
                                 setViewingStudent(null);
@@ -884,9 +883,10 @@ function InstructorAssignments() {
                         </>
                         )}
                         {viewingStudent ? (
-    <div>
+        <div className="student-submission-details">
         <button
             type="button"
+              className="back-to-student-list"
             onClick={() => {
                 setViewingStudent(null);
                 setGradingSubmission(null);
@@ -948,7 +948,7 @@ function InstructorAssignments() {
                 </p>
 
                 {gradingSubmission === viewingStudent.submission._id ? (
-                    <div>
+                    <div className="assignment-grading-form">
                         <h4>Grade Submission</h4>
 
                         <input
@@ -1025,7 +1025,7 @@ function InstructorAssignments() {
 ) : filteredAssignmentStudents.length === 0 ? (
     <p>No students found matching your search or filter.</p>
 ) : (
-    <table>
+    <table className="submission-table">
         <thead>
             <tr>
                 <th>Student Name</th>
@@ -1081,8 +1081,7 @@ function InstructorAssignments() {
             })}
         </tbody>
     </table>
-)}
-                        
+)}                     
                     </div>
                 )}
         </div>
