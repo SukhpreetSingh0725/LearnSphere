@@ -186,30 +186,36 @@ const getInstructorQuizAttempts = async (req, res) => {
         attemptsByStudent.set(studentId, []);
       }
 
-      const detailedAnswers = quiz.questions.map((question) => {
-        const answer = attempt.answers.find(
-          (item) =>
-            item.questionId.toString() === question._id.toString()
-        );
+      const questionData =
+  attempt.questionSnapshots?.length > 0
+    ? attempt.questionSnapshots
+    : quiz.questions;
 
-        const selectedAnswer = answer?.selectedAnswer ?? null;
+const detailedAnswers = questionData.map((question) => {
+  const answer = attempt.answers.find(
+    (item) =>
+      item.questionId.toString() === question.questionId?.toString() ||
+      item.questionId.toString() === question._id?.toString()
+  );
 
-        return {
-          questionId: question._id,
-          question: question.question,
-          options: question.options,
-          selectedAnswer,
-          selectedAnswerText:
-            selectedAnswer !== null
-              ? question.options[selectedAnswer]
-              : null,
-          correctAnswer: question.correctAnswer,
-          correctAnswerText: question.options[question.correctAnswer],
-          isCorrect:
-            selectedAnswer !== null &&
-            selectedAnswer === question.correctAnswer,
-        };
-      });
+  const selectedAnswer = answer?.selectedAnswer ?? null;
+
+  return {
+    questionId: question.questionId || question._id,
+    question: question.question,
+    options: question.options,
+    selectedAnswer,
+    selectedAnswerText:
+      selectedAnswer !== null
+        ? question.options[selectedAnswer]
+        : null,
+    correctAnswer: question.correctAnswer,
+    correctAnswerText: question.options[question.correctAnswer],
+    isCorrect:
+      selectedAnswer !== null &&
+      selectedAnswer === question.correctAnswer,
+  };
+});
 
       attemptsByStudent.get(studentId).push({
         _id: attempt._id,
@@ -333,6 +339,110 @@ const toggleQuizPublish = async (req, res) => {
       });
     }
   };
+
+
+
+// Update Quiz (Instructor)
+const updateQuiz = async (req, res) => {
+  try {
+    const { quizId } = req.params;
+
+    const {
+      title,
+      description,
+      questions,
+      passingScore,
+      maxAttempts,
+      attemptCooldownHours,
+    } = req.body;
+
+    const quiz = await Quiz.findOne({
+      _id: quizId,
+      instructor: req.user._id,
+    });
+
+    if (!quiz) {
+      return res.status(404).json({
+        success: false,
+        message: "Quiz not found",
+      });
+    }
+
+    if (
+      !title?.trim() ||
+      !Array.isArray(questions) ||
+      questions.length === 0 ||
+      passingScore === undefined ||
+      maxAttempts === undefined ||
+      attemptCooldownHours === undefined
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Please provide all required quiz details",
+      });
+    }
+
+    for (const question of questions) {
+      if (
+        !question.question?.trim() ||
+        !Array.isArray(question.options) ||
+        question.options.length < 2 ||
+        question.options.some((option) => !option?.trim()) ||
+        !Number.isInteger(question.correctAnswer) ||
+        question.correctAnswer < 0 ||
+        question.correctAnswer >= question.options.length
+      ) {
+        return res.status(400).json({
+          success: false,
+          message: "Please check the questions, options and correct answers",
+        });
+      }
+    }
+
+    if (
+      !Number.isFinite(Number(passingScore)) ||
+      Number(passingScore) < 0 ||
+      Number(passingScore) > 100 ||
+      !Number.isInteger(Number(maxAttempts)) ||
+      Number(maxAttempts) < 1 ||
+      !Number.isInteger(Number(attemptCooldownHours)) ||
+      Number(attemptCooldownHours) < 0 ||
+      Number(attemptCooldownHours) > 720
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid quiz settings",
+      });
+    }
+
+    quiz.title = title.trim();
+    quiz.description = description || "";
+    quiz.questions = questions.map((question) => ({
+      question: question.question.trim(),
+      options: question.options.map((option) => option.trim()),
+      correctAnswer: question.correctAnswer,
+    }));
+    quiz.passingScore = Number(passingScore);
+    quiz.maxAttempts = Number(maxAttempts);
+    quiz.attemptCooldownHours = Number(attemptCooldownHours);
+
+    await quiz.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Quiz updated successfully",
+      quiz,
+    });
+  } catch (error) {
+    console.error("Update quiz error:", error.message);
+
+    return res.status(500).json({
+      success: false,
+      message: "Unable to update quiz",
+    });
+  }
+};
+
 
 
 // Get Student Quizzes
@@ -512,7 +622,9 @@ if (cycleAttempts >= maxAttempts) {
     const questionIds = new Set();
     let correctCount = 0;
     const savedAnswers = [];
+    const questionSnapshots = [];
     const results = [];
+    
 
     for (const answer of answers) {
       const question = quiz.questions.id(answer.questionId);
@@ -544,6 +656,13 @@ if (cycleAttempts >= maxAttempts) {
       selectedAnswer: answer.selectedAnswer,
     });
 
+    questionSnapshots.push({
+      questionId: question._id,
+      question: question.question,
+      options: [...question.options],
+      correctAnswer: question.correctAnswer,
+    });
+
     const questionResult = {
       questionId: question._id,
       question: question.question,
@@ -567,6 +686,7 @@ if (cycleAttempts >= maxAttempts) {
       quiz: quizId,
       student: req.user._id,
       answers: savedAnswers,
+      questionSnapshots,
       score,
       totalQuestions,
       passed,
@@ -808,4 +928,5 @@ module.exports = {
   getStudentQuizById,
   submitQuiz,
   toggleQuizPublish,
+  updateQuiz,
 };
