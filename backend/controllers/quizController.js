@@ -443,6 +443,57 @@ const updateQuiz = async (req, res) => {
   }
 };
 
+// Delete Quiz (Instructor)
+const deleteQuiz = async (req, res) => {
+  try {
+    const { quizId } = req.params;
+
+    const quiz = await Quiz.findOne({
+      _id: quizId,
+      instructor: req.user._id,
+    });
+
+    if (!quiz) {
+      return res.status(404).json({
+        success: false,
+        message: "Quiz not found",
+      });
+    }
+
+    if (quiz.isPublished) {
+      return res.status(400).json({
+        success: false,
+        message: "Unpublish the quiz before deleting it",
+      });
+    }
+
+    const attemptsExist = await QuizAttempt.exists({
+      quiz: quizId,
+    });
+
+    if (attemptsExist) {
+      return res.status(400).json({
+        success: false,
+        message: "Cannot delete a quiz with student attempts",
+      });
+    }
+
+    await Quiz.findByIdAndDelete(quizId);
+
+    return res.status(200).json({
+      success: true,
+      message: "Quiz deleted successfully",
+    });
+  } catch (error) {
+    console.error("Delete quiz error:", error.message);
+
+    return res.status(500).json({
+      success: false,
+      message: "Unable to delete quiz",
+    });
+  }
+};
+
 
 
 // Get Student Quizzes
@@ -929,4 +980,5 @@ module.exports = {
   submitQuiz,
   toggleQuizPublish,
   updateQuiz,
+  deleteQuiz,
 };
