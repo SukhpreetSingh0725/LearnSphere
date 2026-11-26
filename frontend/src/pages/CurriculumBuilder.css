@@ -115,14 +115,27 @@
 
 .curriculum-lesson {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
-  padding: 10px 12px;
-  margin-bottom: 8px;
+  gap: 12px;
+  padding: 14px;
+  margin-bottom: 10px;
   background: #f8fafc;
-  border-radius: 7px;
+  border: 1px solid #e2e8f0;
+  border-radius: 9px;
   color: #334155;
   font-size: 14px;
+}
+
+.curriculum-lesson .lesson-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.curriculum-lesson .edit-lesson-form {
+  flex-basis: 100%;
+  order: 3;
 }
 
 .curriculum-lesson small {
@@ -226,20 +239,67 @@
   background: #fee2e2;
   color: #dc2626;
 }
-
 .edit-lesson-form {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+  flex-direction: column;
+  gap: 16px;
   width: 100%;
+  box-sizing: border-box;
+  padding: 22px;
+  margin: 12px 0;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);
 }
 
-.edit-lesson-form input {
-  flex: 1;
-  min-width: 120px;
-  padding: 7px 10px;
+.edit-lesson-form > input[type="text"],
+.edit-lesson-form > textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 11px 13px;
   border: 1px solid #cbd5e1;
+  border-radius: 7px;
+  font-size: 14px;
+  font-family: inherit;
+}
+
+.edit-lesson-form > label {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  padding: 15px;
+  background: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  border-radius: 8px;
+  color: #334155;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.edit-lesson-form > div {
+  padding: 15px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+}
+
+.edit-lesson-form > div h4 {
+  margin-bottom: 14px;
+}
+
+.edit-lesson-form button {
+  padding: 9px 16px;
+  border: none;
   border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.edit-lesson-form button:first-of-type {
+  background: #2563eb;
+  color: white;
 }
 
 .edit-lesson-form button:last-child {
@@ -317,4 +377,286 @@
     align-items: flex-start;
     flex-direction: column;
   }
+}
+
+
+/* FAQ Management */
+
+.course-faq-manager {
+  margin-top: 30px;
+  padding: 24px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+}
+
+.faq-manager-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 22px;
+}
+
+.faq-manager-header h3 {
+  color: #1e293b;
+  font-size: 20px;
+  margin-bottom: 6px;
+}
+
+.faq-manager-header p {
+  color: #64748b;
+  font-size: 14px;
+}
+
+.faq-add-btn,
+.faq-create-form button,
+.faq-item-actions button {
+  padding: 9px 15px;
+  border: none;
+  border-radius: 7px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.faq-add-btn,
+.faq-create-form button,
+.faq-save-btn {
+  background: #2563eb;
+  color: white;
+}
+
+.faq-create-form,
+.faq-edit-form {
+  padding: 20px;
+  margin-bottom: 20px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+}
+
+.faq-create-form h4,
+.faq-edit-form h4 {
+  margin-bottom: 16px;
+  color: #1e293b;
+}
+
+.faq-create-form label,
+.faq-edit-form label {
+  display: block;
+  margin: 12px 0 7px;
+  color: #334155;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.faq-create-form input,
+.faq-create-form textarea,
+.faq-edit-form input,
+.faq-edit-form textarea {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 11px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 7px;
+  font-family: inherit;
+  font-size: 14px;
+  outline: none;
+}
+
+.faq-create-form input:focus,
+.faq-create-form textarea:focus,
+.faq-edit-form input:focus,
+.faq-edit-form textarea:focus {
+  border-color: #2563eb;
+}
+
+.faq-create-form textarea,
+.faq-edit-form textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+.faq-create-form button {
+  margin-top: 16px;
+}
+
+.faq-create-form button:disabled,
+.faq-item-actions button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.faq-management-list {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.faq-management-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+  padding: 14px 16px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+}
+
+.faq-number {
+  display: inline-block;
+  margin-bottom: 9px;
+  color: #2563eb;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.faq-item-content h4 {
+  margin-bottom: 8px;
+  color: #1e293b;
+  font-size: 15px;
+}
+
+.faq-item-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.faq-item-content p {
+  display: none;
+}
+
+.faq-item-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  margin-top: 0;
+  flex-shrink: 0;
+}
+
+.faq-edit-btn {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.faq-delete-btn {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.faq-cancel-btn {
+  background: #e2e8f0;
+  color: #334155;
+}
+
+.faq-empty-message {
+  padding: 22px;
+  color: #64748b;
+  text-align: center;
+  background: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  border-radius: 9px;
+}
+@media (max-width: 600px) {
+  .course-faq-manager {
+    padding: 16px;
+  }
+
+  .faq-manager-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .faq-management-item {
+    padding: 14px;
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .faq-management-item .faq-item-actions {
+    margin-top: 8px;
+  }
+}
+
+
+.faq-pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.faq-pagination button {
+  padding: 8px 16px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #334155;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.faq-pagination button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.faq-pagination span {
+  color: #64748b;
+  font-size: 14px;
+}
+
+.edit-lesson-form > div > div {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px;
+  margin-bottom: 12px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+}
+
+.edit-lesson-form > div > div input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+}
+
+.edit-lesson-form > div > div button {
+  align-self: flex-start;
+}
+
+.edit-lesson-form > div > button {
+  margin-top: 8px;
+}
+
+/* Edit Lesson Border Improvements */
+
+.edit-lesson-form {
+  border: 1px solid #60a5fa;
+}
+
+.edit-lesson-form > input[type="text"],
+.edit-lesson-form > textarea,
+.edit-lesson-form > label {
+  border: 1px solid #93c5fd;
+}
+
+.edit-lesson-form > div {
+  border: 1px solid #60a5fa;
+}
+
+.edit-lesson-form > div > div {
+  border: 1px solid #93c5fd;
+}
+
+.edit-lesson-form > div > div input {
+  border: 1px solid #93c5fd;
 }
