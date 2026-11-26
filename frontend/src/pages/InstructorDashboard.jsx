@@ -151,7 +151,11 @@ useEffect(() => {
           </section>
         )}
 
-          {activeTab === "My Courses" && <InstructorCourses />}
+{activeTab === "My Courses" && (
+  <InstructorCourses
+    onCreateCourse={() => setActiveTab("Create Course")}
+  />
+)}
           {activeTab === "Create Course" && <CreateCourse />}
           {activeTab === "Curriculum Builder" && <CurriculumBuilder />}
           {activeTab === "Quiz Management" && <InstructorQuizzes />}
