@@ -28,6 +28,15 @@ function InstructorQuizzes() {
   const [activePage, setActivePage] = useState("create");
   const [viewingQuiz, setViewingQuiz] = useState(null);
   const [viewingStudent, setViewingStudent] = useState(null);
+  const [editingQuiz, setEditingQuiz] = useState(false);
+  const [editTitle, setEditTitle] = useState("");
+  const [editDescription, setEditDescription] = useState("");
+  const [editPassingScore, setEditPassingScore] = useState(60);
+  const [editMaxAttempts, setEditMaxAttempts] = useState(3);
+  const [editAttemptCooldownHours, setEditAttemptCooldownHours] = useState(24);
+
+  const [editQuestions, setEditQuestions] = useState([]);
+  const [savingEdit, setSavingEdit] = useState(false);
   // Your Quizzes filters
   const [managementCourse, setManagementCourse] = useState("");
   const [managementSection, setManagementSection] = useState("");
@@ -316,6 +325,149 @@ const handlePublish = async (quizId) => {
   } catch {
     setMessage("Unable to update quiz status.");
   }
+};
+
+const handleStartEdit = (quiz) => {
+  setEditTitle(quiz.title);
+  setEditDescription(quiz.description || "");
+  setEditPassingScore(quiz.passingScore);
+  setEditMaxAttempts(quiz.maxAttempts);
+  setEditAttemptCooldownHours(quiz.attemptCooldownHours);
+
+  setEditQuestions(
+    quiz.questions.map((question) => ({
+      question: question.question,
+      options: [...question.options],
+      correctAnswer: question.correctAnswer,
+    }))
+  );
+
+  setEditingQuiz(true);
+};
+
+const handleSaveEdit = async (e) => {
+  e.preventDefault();
+  setMessage("");
+
+  if (
+    !editTitle.trim() ||
+    editQuestions.length === 0 ||
+    editQuestions.some(
+      (q) =>
+        !q.question.trim() ||
+        q.options.length < 2 ||
+        q.options.some((option) => !option.trim()) ||
+        q.correctAnswer < 0 ||
+        q.correctAnswer >= q.options.length
+    )
+  ) {
+    setMessage("Please complete all questions and options.");
+    return;
+  }
+
+  try {
+    setSavingEdit(true);
+
+    const response = await fetch(
+      `http://localhost:5000/api/quizzes/${viewingQuiz._id}`,
+      {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          title: editTitle,
+          description: editDescription,
+          passingScore: Number(editPassingScore),
+          maxAttempts: Number(editMaxAttempts),
+          attemptCooldownHours: Number(editAttemptCooldownHours),
+          questions: editQuestions,
+        }),
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok || !data.success) {
+      setMessage(data.message || "Unable to update quiz.");
+      return;
+    }
+
+    setQuizzes((previous) =>
+      previous.map((quiz) =>
+        quiz._id === viewingQuiz._id
+          ? { ...quiz, ...data.quiz, course: quiz.course, lesson: quiz.lesson }
+          : quiz
+      )
+    );
+
+    setViewingQuiz((previous) => ({
+      ...previous,
+      ...data.quiz,
+      course: previous.course,
+      lesson: previous.lesson,
+    }));
+
+    setEditingQuiz(false);
+    setMessage("Quiz updated successfully!");
+  } catch {
+    setMessage("Unable to update quiz.");
+  } finally {
+    setSavingEdit(false);
+  }
+};
+
+const handleEditQuestionChange = (index, value) => {
+  setEditQuestions((previous) =>
+    previous.map((question, i) =>
+      i === index ? { ...question, question: value } : question
+    )
+  );
+};
+
+const handleEditOptionChange = (questionIndex, optionIndex, value) => {
+  setEditQuestions((previous) =>
+    previous.map((question, i) =>
+      i === questionIndex
+        ? {
+            ...question,
+            options: question.options.map((option, j) =>
+              j === optionIndex ? value : option
+            ),
+          }
+        : question
+    )
+  );
+};
+
+const handleEditCorrectAnswerChange = (questionIndex, value) => {
+  setEditQuestions((previous) =>
+    previous.map((question, i) =>
+      i === questionIndex
+        ? { ...question, correctAnswer: Number(value) }
+        : question
+    )
+  );
+};
+
+const handleAddEditQuestion = () => {
+  setEditQuestions((previous) => [
+    ...previous,
+    {
+      question: "",
+      options: ["", "", "", ""],
+      correctAnswer: 0,
+    },
+  ]);
+};
+
+const handleRemoveEditQuestion = (index) => {
+  if (editQuestions.length === 1) return;
+
+  setEditQuestions((previous) =>
+    previous.filter((_, i) => i !== index)
+  );
 };
 
 const handleViewQuizAttempts = async (quiz) => {
@@ -708,77 +860,197 @@ const filteredAttemptQuizzes = quizzes.filter((quiz) => {
 
 
 {viewingQuiz && (
-    <div>
-        <button
-            type="button"
-            onClick={() => setViewingQuiz(null)}
-        >
-            Back to Quizzes
+  <div>
+    <button
+      type="button"
+      onClick={() => {
+        setViewingQuiz(null);
+        setEditingQuiz(false);
+      }}
+    >
+      Back to Quizzes
+    </button>
+
+    <hr />
+
+    {editingQuiz ? (
+      <form onSubmit={handleSaveEdit}>
+        <h2>Edit Quiz</h2>
+
+        <label>Quiz Title</label>
+        <input
+          type="text"
+          value={editTitle}
+          onChange={(e) => setEditTitle(e.target.value)}
+          required
+        />
+
+        <label>Description</label>
+        <textarea
+          value={editDescription}
+          onChange={(e) => setEditDescription(e.target.value)}
+        />
+
+        <label>Passing Score (%)</label>
+        <input
+          type="number"
+          min="0"
+          max="100"
+          value={editPassingScore}
+          onChange={(e) => setEditPassingScore(e.target.value)}
+          required
+        />
+
+        <label>Maximum Attempts</label>
+        <input
+          type="number"
+          min="1"
+          value={editMaxAttempts}
+          onChange={(e) => setEditMaxAttempts(e.target.value)}
+          required
+        />
+
+        <label>Cooldown (Hours)</label>
+        <input
+          type="number"
+          min="0"
+          max="720"
+          value={editAttemptCooldownHours}
+          onChange={(e) => setEditAttemptCooldownHours(e.target.value)}
+          required
+        />
+
+        <hr />
+
+        <h3>Questions</h3>
+
+        {editQuestions.map((question, index) => (
+          <div key={index}>
+            <h4>Question {index + 1}</h4>
+
+            <input
+              type="text"
+              placeholder="Enter question"
+              value={question.question}
+              onChange={(e) =>
+                handleEditQuestionChange(index, e.target.value)
+              }
+              required
+            />
+
+            {question.options.map((option, optionIndex) => (
+              <div key={optionIndex}>
+                <input
+                  type="text"
+                  placeholder={`Option ${optionIndex + 1}`}
+                  value={option}
+                  onChange={(e) =>
+                    handleEditOptionChange(
+                      index,
+                      optionIndex,
+                      e.target.value
+                    )
+                  }
+                  required
+                />
+
+                <label>
+                  <input
+                    type="radio"
+                    name={`correct-answer-${index}`}
+                    checked={question.correctAnswer === optionIndex}
+                    onChange={() =>
+                      handleEditCorrectAnswerChange(index, optionIndex)
+                    }
+                  />
+                  Correct Answer
+                </label>
+              </div>
+            ))}
+
+            <button
+              type="button"
+              onClick={() => handleRemoveEditQuestion(index)}
+              disabled={editQuestions.length === 1}
+            >
+              Remove Question
+            </button>
+
+            <hr />
+          </div>
+        ))}
+
+        <button type="button" onClick={handleAddEditQuestion}>
+          + Add Question
         </button>
 
         <hr />
 
+        <button type="submit" disabled={savingEdit}>
+          {savingEdit ? "Saving..." : "Save Changes"}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setEditingQuiz(false)}
+          disabled={savingEdit}
+        >
+          Cancel
+        </button>
+      </form>
+    ) : (
+      <>
         <h2>{viewingQuiz.title}</h2>
 
-        <p>
-            Course: {viewingQuiz.course?.title || "N/A"}
-        </p>
-
-        <p>
-            Section: {viewingQuiz.lesson?.section?.title || "N/A"}
-        </p>
-
-        <p>
-            Lesson: {viewingQuiz.lesson?.title || "N/A"}
-        </p>
-
-        <p>
-            Description: {viewingQuiz.description || "No description"}
-        </p>
-
+        <p>Course: {viewingQuiz.course?.title || "N/A"}</p>
+        <p>Section: {viewingQuiz.lesson?.section?.title || "N/A"}</p>
+        <p>Lesson: {viewingQuiz.lesson?.title || "N/A"}</p>
+        <p>Description: {viewingQuiz.description || "No description"}</p>
         <p>Questions: {viewingQuiz.questions?.length || 0}</p>
-
         <p>Passing Score: {viewingQuiz.passingScore}%</p>
-
         <p>Maximum Attempts: {viewingQuiz.maxAttempts}</p>
-
-        <p>
-            Cooldown: {viewingQuiz.attemptCooldownHours} hours
-        </p>
-
-        <p>
-            Status: {viewingQuiz.isPublished ? "Published" : "Draft"}
-        </p>
+        <p>Cooldown: {viewingQuiz.attemptCooldownHours} hours</p>
+        <p>Status: {viewingQuiz.isPublished ? "Published" : "Draft"}</p>
 
         <h3>Quiz Questions</h3>
 
         {viewingQuiz.questions?.map((question, index) => (
-            <div key={index}>
-                <h4>Question {index + 1}: {question.question}</h4>
+          <div key={index}>
+            <h4>Question {index + 1}: {question.question}</h4>
 
-                {question.options.map((option, optionIndex) => (
-                    <p key={optionIndex}>
-                        Option {optionIndex + 1}: {option}
-                        {question.correctAnswer === optionIndex
-                            ? " ✓ Correct Answer"
-                            : ""}
-                    </p>
-                ))}
+            {question.options.map((option, optionIndex) => (
+              <p key={optionIndex}>
+                Option {optionIndex + 1}: {option}
+                {question.correctAnswer === optionIndex
+                  ? " ✓ Correct Answer"
+                  : ""}
+              </p>
+            ))}
 
-                <hr />
-            </div>
+            <hr />
+          </div>
         ))}
 
         <button
-            type="button"
-            onClick={() => handlePublish(viewingQuiz._id)}
+          type="button"
+          onClick={() => handleStartEdit(viewingQuiz)}
         >
-            {viewingQuiz.isPublished ? "Unpublish" : "Publish"}
+          Edit Quiz
         </button>
-    </div>
+
+        <button
+          type="button"
+          onClick={() => handlePublish(viewingQuiz._id)}
+        >
+          {viewingQuiz.isPublished ? "Unpublish" : "Publish"}
+        </button>
+      </>
+    )}
+  </div>
 )}
-    </>
+</>
 )}
+
 
 {activePage === "attempts" && (
     <div>
