@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
+import "./InstructorQuizzes.css";
 
 function InstructorQuizzes() {
   const { token } = useAuth();
@@ -418,6 +419,47 @@ const handleSaveEdit = async (e) => {
   }
 };
 
+const handleDeleteQuiz = async (quizId) => {
+  const confirmed = window.confirm(
+    "Are you sure you want to permanently delete this draft quiz?"
+  );
+
+  if (!confirmed) return;
+
+  try {
+    const response = await fetch(
+      `http://localhost:5000/api/quizzes/${quizId}`,
+      {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok || !data.success) {
+      window.alert(
+        data.message === "Cannot delete a quiz with student attempts"
+          ? "This quiz cannot be deleted because students have already attempted it.\n\nYou can unpublish it to hide it from students while preserving their attempt history."
+          : data.message || "Unable to delete quiz."
+      );
+      return;
+    }
+
+    setQuizzes((previous) =>
+      previous.filter((quiz) => quiz._id !== quizId)
+    );
+
+    setViewingQuiz(null);
+    setEditingQuiz(false);
+    setMessage("Quiz deleted successfully!");
+  } catch {
+    setMessage("Unable to delete quiz.");
+  }
+};
+
 const handleEditQuestionChange = (index, value) => {
   setEditQuestions((previous) =>
     previous.map((question, i) =>
@@ -551,15 +593,16 @@ const filteredAttemptQuizzes = quizzes.filter((quiz) => {
 });
 
   return (
-    <section>
+    <section className="instructor-quizzes">
       {activePage === "create" && <h2>Create Quiz</h2>}
 
       {message && <p>{message}</p>}
-      <div>
-    <button
-        type="button"
-        onClick={() => {
-            setActivePage("create");
+      <div className="quiz-navigation">
+      <button
+    type="button"
+    className={activePage === "create" ? "active" : ""}
+    onClick={() => {
+        setActivePage("create");
             setViewingQuiz(null);
             setViewingStudent(null);
         }}
@@ -569,6 +612,7 @@ const filteredAttemptQuizzes = quizzes.filter((quiz) => {
 
     <button
         type="button"
+        className={activePage === "quizzes" ? "active" : ""}
         onClick={() => {
             setActivePage("quizzes");
             setViewingQuiz(null);
@@ -580,6 +624,7 @@ const filteredAttemptQuizzes = quizzes.filter((quiz) => {
 
     <button
         type="button"
+        className={activePage === "attempts" ? "active" : ""}
         onClick={() => {
             setActivePage("attempts");
             setViewingQuiz(null);
@@ -591,7 +636,7 @@ const filteredAttemptQuizzes = quizzes.filter((quiz) => {
 </div>
 {activePage === "create" && (
     <>
-      <form onSubmit={handleCreateQuiz}>
+      <form onSubmit={handleCreateQuiz} className="quiz-form">
         <div>
           <label>Select Course</label>
           <select
@@ -692,7 +737,7 @@ const filteredAttemptQuizzes = quizzes.filter((quiz) => {
         <h3>Questions</h3>
 
         {questions.map((question, questionIndex) => (
-          <div key={questionIndex}>
+         <div className="quiz-question-card" key={questionIndex}>
             <h4>Question {questionIndex + 1}</h4>
 
             <input
@@ -757,7 +802,7 @@ const filteredAttemptQuizzes = quizzes.filter((quiz) => {
         <hr />
 
         <h2>Your Quizzes ({filteredManagementQuizzes.length})</h2>
-        <div>
+        <div className="quiz-filter">
     <label>Filter by Course</label>
     <select
         value={managementCourse}
@@ -778,7 +823,7 @@ const filteredAttemptQuizzes = quizzes.filter((quiz) => {
     </select>
 </div>
 
-<div>
+<div className="quiz-filter">
     <label>Filter by Section</label>
     <select
         value={managementSection}
@@ -801,7 +846,8 @@ const filteredAttemptQuizzes = quizzes.filter((quiz) => {
     filteredManagementQuizzes.length === 0 ? (
     <p>No quizzes found for the selected filters.</p>
 ) : (
-    <table>
+  <div className="quiz-table-wrapper">
+  <table className="quiz-table">
         <thead>
             <tr>
                 <th>Quiz Name</th>
@@ -855,14 +901,15 @@ const filteredAttemptQuizzes = quizzes.filter((quiz) => {
             ))}
         </tbody>
     </table>
+</div>
     )
   )}
 
-
 {viewingQuiz && (
-  <div>
+  <div className="quiz-card">
     <button
       type="button"
+      className="quiz-back-btn"
       onClick={() => {
         setViewingQuiz(null);
         setEditingQuiz(false);
@@ -874,7 +921,7 @@ const filteredAttemptQuizzes = quizzes.filter((quiz) => {
     <hr />
 
     {editingQuiz ? (
-      <form onSubmit={handleSaveEdit}>
+      <form onSubmit={handleSaveEdit} className="quiz-form">
         <h2>Edit Quiz</h2>
 
         <label>Quiz Title</label>
@@ -939,7 +986,7 @@ const filteredAttemptQuizzes = quizzes.filter((quiz) => {
             />
 
             {question.options.map((option, optionIndex) => (
-              <div key={optionIndex}>
+           <div key={optionIndex} className="quiz-edit-option">
                 <input
                   type="text"
                   placeholder={`Option ${optionIndex + 1}`}
@@ -1000,22 +1047,58 @@ const filteredAttemptQuizzes = quizzes.filter((quiz) => {
       </form>
     ) : (
       <>
-        <h2>{viewingQuiz.title}</h2>
+        <h2 className="quiz-details-title">{viewingQuiz.title}</h2>
 
-        <p>Course: {viewingQuiz.course?.title || "N/A"}</p>
-        <p>Section: {viewingQuiz.lesson?.section?.title || "N/A"}</p>
-        <p>Lesson: {viewingQuiz.lesson?.title || "N/A"}</p>
-        <p>Description: {viewingQuiz.description || "No description"}</p>
-        <p>Questions: {viewingQuiz.questions?.length || 0}</p>
-        <p>Passing Score: {viewingQuiz.passingScore}%</p>
-        <p>Maximum Attempts: {viewingQuiz.maxAttempts}</p>
-        <p>Cooldown: {viewingQuiz.attemptCooldownHours} hours</p>
-        <p>Status: {viewingQuiz.isPublished ? "Published" : "Draft"}</p>
+        <div className="quiz-details-info">
+            <div className="quiz-info-item">
+              <span>Course</span>
+              <strong>{viewingQuiz.course?.title || "N/A"}</strong>
+            </div>
+
+            <div className="quiz-info-item">
+              <span>Section</span>
+              <strong>{viewingQuiz.lesson?.section?.title || "N/A"}</strong>
+            </div>
+
+            <div className="quiz-info-item">
+              <span>Lesson</span>
+              <strong>{viewingQuiz.lesson?.title || "N/A"}</strong>
+            </div>
+
+            <div className="quiz-info-item">
+              <span>Questions</span>
+              <strong>{viewingQuiz.questions?.length || 0}</strong>
+            </div>
+
+            <div className="quiz-info-item">
+              <span>Passing Score</span>
+              <strong>{viewingQuiz.passingScore}%</strong>
+            </div>
+
+            <div className="quiz-info-item">
+              <span>Maximum Attempts</span>
+              <strong>{viewingQuiz.maxAttempts}</strong>
+            </div>
+
+            <div className="quiz-info-item">
+              <span>Cooldown</span>
+              <strong>{viewingQuiz.attemptCooldownHours} hours</strong>
+            </div>
+
+            <div className="quiz-info-item">
+              <span>Status</span>
+              <strong>{viewingQuiz.isPublished ? "Published" : "Draft"}</strong>
+            </div>
+          </div>
+
+          <p className="quiz-details-description">
+            {viewingQuiz.description || "No description available"}
+          </p>
 
         <h3>Quiz Questions</h3>
 
         {viewingQuiz.questions?.map((question, index) => (
-          <div key={index}>
+          <div key={index} className="quiz-question-card">
             <h4>Question {index + 1}: {question.question}</h4>
 
             {question.options.map((option, optionIndex) => (
@@ -1033,6 +1116,7 @@ const filteredAttemptQuizzes = quizzes.filter((quiz) => {
 
         <button
           type="button"
+          className="quiz-edit-btn"
           onClick={() => handleStartEdit(viewingQuiz)}
         >
           Edit Quiz
@@ -1040,10 +1124,20 @@ const filteredAttemptQuizzes = quizzes.filter((quiz) => {
 
         <button
           type="button"
+          className="quiz-publish-btn"
           onClick={() => handlePublish(viewingQuiz._id)}
         >
           {viewingQuiz.isPublished ? "Unpublish" : "Publish"}
         </button>
+        {!viewingQuiz.isPublished && (
+          <button
+            type="button"
+             className="quiz-delete-btn"
+            onClick={() => handleDeleteQuiz(viewingQuiz._id)}
+          >
+            Delete Quiz
+          </button>
+        )}
       </>
     )}
   </div>
@@ -1053,11 +1147,11 @@ const filteredAttemptQuizzes = quizzes.filter((quiz) => {
 
 
 {activePage === "attempts" && (
-    <div>
+    <div className="student-attempts-section">
         <hr />
         <h2>Student Attempts</h2>
 
-        <div>
+        <div className="quiz-filter">
             <label>Filter by Course</label>
             <select
                 value={attemptCourse}
@@ -1085,7 +1179,7 @@ const filteredAttemptQuizzes = quizzes.filter((quiz) => {
             </select>
         </div>
 
-        <div>
+        <div className="quiz-filter">
             <label>Filter by Section</label>
             <select
                 value={attemptSection}
@@ -1109,7 +1203,7 @@ const filteredAttemptQuizzes = quizzes.filter((quiz) => {
             </select>
         </div>
 
-        <div>
+        <div className="quiz-filter">
             <label>Select Quiz</label>
             <select
                 value={attemptQuizId}
@@ -1148,14 +1242,7 @@ const filteredAttemptQuizzes = quizzes.filter((quiz) => {
                         <hr />
                         <h3>Quiz Performance: {selectedAttemptQuiz.title}</h3>
 
-                        <div
-                            style={{
-                                display: "grid",
-                                gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
-                                gap: "12px",
-                                marginBottom: "20px"
-                            }}
-                        >
+                        <div className="quiz-stats-grid">
                             {[
                                 {
                                     label: "Total Students",
@@ -1182,14 +1269,7 @@ const filteredAttemptQuizzes = quizzes.filter((quiz) => {
                                     value: quizAttemptStats.totalAttempts
                                 }
                             ].map((stat) => (
-                                <div
-                                    key={stat.label}
-                                    style={{
-                                        border: "1px solid #ddd",
-                                        borderRadius: "8px",
-                                        padding: "14px"
-                                    }}
-                                >
+                              <div key={stat.label} className="quiz-stat-card">
                                     <p>{stat.label}</p>
                                     <h3>{stat.value ?? 0}</h3>
                                 </div>
@@ -1198,10 +1278,11 @@ const filteredAttemptQuizzes = quizzes.filter((quiz) => {
                     </>
                 )}
     <div>
-        {viewingStudent ? (
-            <div>
+    {viewingStudent ? (
+    <div className="quiz-card">
                 <button
                     type="button"
+                     className="quiz-back-btn"
                     onClick={() => setViewingStudent(null)}
                 >
                     Back to Student List
@@ -1209,9 +1290,11 @@ const filteredAttemptQuizzes = quizzes.filter((quiz) => {
 
                 <hr />
 
-                <h3>Student Quiz History</h3>
+                <h3 className="student-history-title">Student Quiz History</h3>
 
-                <h4>{viewingStudent.student.name}</h4>
+                <h4 className="student-history-name">
+    {viewingStudent.student.name}
+</h4>
                 <p>Email: {viewingStudent.student.email}</p>
                 <p>Total Attempts: {viewingStudent.attemptsCount}</p>
                 <p>
@@ -1231,13 +1314,13 @@ const filteredAttemptQuizzes = quizzes.filter((quiz) => {
 
                 <hr />
 
-                <h3>Attempt History</h3>
+                <h3 className="student-attempt-history-title">Attempt History</h3>
 
                 {viewingStudent.attempts.length === 0 ? (
                     <p>This student has not attempted this quiz yet.</p>
                 ) : (
                     viewingStudent.attempts.map((attempt) => (
-                        <div key={attempt._id}>
+                      <div key={attempt._id} className="quiz-attempt-card">
                             <h4>
                                 Attempt {attempt.attemptNumber}
                                 {" "} (Cycle {attempt.cycleNumber})
@@ -1310,6 +1393,7 @@ const filteredAttemptQuizzes = quizzes.filter((quiz) => {
                 />
 
                 <select
+                className="student-attempt-status"
                     value={attemptStatusFilter}
                     onChange={(e) => setAttemptStatusFilter(e.target.value)}
                 >
@@ -1325,7 +1409,8 @@ const filteredAttemptQuizzes = quizzes.filter((quiz) => {
                 ) : filteredQuizAttemptStudents.length === 0 ? (
                     <p>No students found.</p>
                 ) : (
-                    <table>
+                  <div className="quiz-table-wrapper">
+                   <table className="quiz-table">
                         <thead>
                             <tr>
                                 <th>Student Name</th>
@@ -1367,6 +1452,7 @@ const filteredAttemptQuizzes = quizzes.filter((quiz) => {
                             ))}
                         </tbody>
                     </table>
+                    </div>
                 )}
             </>
         )}
