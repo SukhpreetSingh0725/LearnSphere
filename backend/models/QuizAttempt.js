@@ -24,6 +24,26 @@ const quizAttemptSchema = new mongoose.Schema(
         },
       },
     ],
+    questionSnapshots: [
+      {
+        questionId: {
+          type: mongoose.Schema.Types.ObjectId,
+          required: true,
+        },
+        question: {
+          type: String,
+          required: true,
+        },
+        options: {
+          type: [String],
+          required: true,
+        },
+        correctAnswer: {
+          type: Number,
+          required: true,
+        },
+      },
+    ],
     score: {
       type: Number,
       default: 0,
