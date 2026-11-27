@@ -2,6 +2,7 @@ const express = require("express");
 
 const {
     createAssignment,
+    updateAssignment,
     getInstructorAssignments,
     toggleAssignmentPublish,
     getStudentAssignments,
@@ -22,6 +23,13 @@ router.post(
     protect,
     authorizeRoles("instructor", "admin"),
     createAssignment
+);
+
+router.patch(
+    "/:assignmentId",
+    protect,
+    authorizeRoles("instructor", "admin"),
+    updateAssignment
 );
 
 router.get(
