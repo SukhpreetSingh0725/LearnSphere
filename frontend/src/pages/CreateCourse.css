@@ -118,4 +118,130 @@
       gap: 0;
     }
   }
-  
+
+  /* Create Course Header UI */
+
+.create-course-header {
+  padding: 20px 24px;
+  background: #ffffff;
+  border: 1px solid #0e44b8;
+  border-left: 4px solid #1d4ed8;
+  border-radius: 12px;
+  margin-bottom: 25px;
+}
+
+.create-course-header h2 {
+  font-size: 26px;
+  font-weight: 700;
+  color: #0f172a;
+  letter-spacing: -0.5px;
+}
+
+.create-course-header p {
+  color: #2563eb;
+  font-size: 14px;
+  font-weight: 500;
+  margin-top: 6px;
+}
+/* Create Course Form Card */
+
+.create-course-form {
+  background: #ffffff;
+  border: 1px solid #0760c7;
+  border-left: 4px solid #2563eb;
+  border-radius: 14px;
+  padding: 30px;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05);
+}
+/* Create Course Input Fields */
+
+.create-course-form .form-group label {
+  color: #1e40af;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.create-course-form .form-group input,
+.create-course-form .form-group textarea,
+.create-course-form .form-group select {
+  border: 1px solid #2563eb;
+  border-radius: 8px;
+  background: #ffffff;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.create-course-form .form-group input:focus,
+.create-course-form .form-group textarea:focus,
+.create-course-form .form-group select:focus {
+  border: 2px solid #1d4ed8;
+  box-shadow: 0 0 0 3px #dbeafe;
+}
+
+/* Create Course Submit Button */
+
+.submit-course-form-btn {
+  padding: 13px 26px;
+  border: 1px solid #1d4ed8;
+  border-radius: 8px;
+  background: #2563eb;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.submit-course-form-btn:hover:not(:disabled) {
+  background: #1d4ed8;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2);
+}
+
+.submit-course-form-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+/* Create Course Message Styling */
+
+.create-course-message.success {
+  border: 1px solid #16a34a;
+}
+
+.create-course-message.error {
+  border: 1px solid #dc2626;
+}
+
+/* Create Course Responsive Layout */
+
+@media (max-width: 650px) {
+  .create-course-header {
+      padding: 18px;
+  }
+
+  .create-course-header h2 {
+      font-size: 22px;
+  }
+
+  .create-course-form {
+      padding: 18px;
+  }
+
+  .submit-course-form-btn {
+      width: 100%;
+  }
+}
+
+/* Center Create Course Header and Form */
+
+.create-course-page {
+  margin: 0 auto;
+}
+
+.create-course-header {
+  text-align: center;
+}
+
+.create-course-form {
+  margin: 0 auto;
+}
