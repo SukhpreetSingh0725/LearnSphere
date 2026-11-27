@@ -6,6 +6,17 @@ function InstructorCourses({ onCreateCourse }) {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(false);
   const [editingCourse, setEditingCourse] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+const coursesPerPage = 2;
+
+const totalPages = Math.ceil(courses.length / coursesPerPage);
+
+const startIndex = (currentPage - 1) * coursesPerPage;
+
+const currentCourses = courses.slice(
+  startIndex,
+  startIndex + coursesPerPage
+);
   const { token } = useAuth();
 
   useEffect(() => {
@@ -346,7 +357,7 @@ const handleUpdateCourse = async () => {
         ) : (
           
             <div className="instructor-course-list">
-              {courses.map((course) => (
+              {currentCourses.map((course) => (
                 <div className="instructor-course-card" key={course._id}>
 
                   <div className="course-card-top">
@@ -401,10 +412,36 @@ const handleUpdateCourse = async () => {
             </div>
 
         )}
-      </div>
+               
 
+{!loading && courses.length > coursesPerPage && (
+    <div className="courses-pagination">
+        <button
+            type="button"
+            disabled={currentPage === 1}
+            onClick={() => setCurrentPage(currentPage - 1)}
+        >
+            Previous
+        </button>
+
+        <span>
+            Page {currentPage} of {totalPages}
+        </span>
+
+        <button
+            type="button"
+            disabled={currentPage === totalPages}
+            onClick={() => setCurrentPage(currentPage + 1)}
+        >
+            Next
+        </button>
     </div>
-  );
+)}
+
+</div>
+
+</div>
+);
 }
 
 export default InstructorCourses;
