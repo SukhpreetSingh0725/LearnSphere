@@ -30,7 +30,7 @@ function CurriculumBuilder() {
   const [editedLessonTranscript, setEditedLessonTranscript] = useState("");
   const [faqs, setFaqs] = useState([]);
   const [currentFAQPage, setCurrentFAQPage] = useState(1);
-  const faqsPerPage = 5;
+  const faqsPerPage = 2;
   const [faqQuestion, setFaqQuestion] = useState("");
   const [faqAnswer, setFaqAnswer] = useState("");
   const [editingFAQ, setEditingFAQ] = useState(null);
@@ -709,6 +709,8 @@ const currentFAQs = faqs.slice(
                         value={editedLessonTitle}
                         onChange={(e) => setEditedLessonTitle(e.target.value)}
                       />
+                      {lesson.type === "video" && (
+    <>
                         <label>
                         Lesson video (MP4, WebM or MOV, up to 50 MB)
                         <input
@@ -786,6 +788,8 @@ const currentFAQs = faqs.slice(
                           + Add Resource
                         </button>
                       </div>
+                      </>
+)}
                       <button
                         type="button"
                         onClick={() => handleUpdateLesson(lesson._id)}
