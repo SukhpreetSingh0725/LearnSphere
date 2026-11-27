@@ -11,7 +11,7 @@ import InstructorQuizzes from "./InstructorQuizzes";
 import InstructorAssignments from "./InstructorAssignments";
 
 function InstructorDashboard() {
-  const { token } = useAuth();
+  const { token, user } = useAuth();
 const [analytics, setAnalytics] = useState(null);
 
 useEffect(() => {
@@ -99,9 +99,17 @@ useEffect(() => {
           </div>
 
           <div className="instructor-profile">
-            <div className="instructor-avatar">I</div>
-            <span>Instructor</span>
-          </div>
+    <div className="instructor-avatar">
+        {user?.name?.charAt(0).toUpperCase() || "I"}
+    </div>
+
+    <button
+        className="instructor-profile-link"
+        onClick={() => setActiveTab("Settings")}
+    >
+        {user?.name || "Instructor"}
+    </button>
+</div>
         </header>
 
         {activeTab === "Overview" && (
@@ -114,27 +122,43 @@ useEffect(() => {
 
             <div className="instructor-stats">
 
-              <div className="instructor-stat-card">
-                <span>Total Courses</span>
-                <h2>{analytics ? analytics.totalCourses : "..."}</h2>
-              </div>
+<div className="instructor-stat-card">
+    <div className="stat-card-top">
+        <span>Total Courses</span>
+        <div className="stat-card-icon blue">📚</div>
+    </div>
+    <h2>{analytics ? analytics.totalCourses : "..."}</h2>
+    <p>Courses created by you</p>
+</div>
 
-              <div className="instructor-stat-card">
-                <span>Total Students</span>
-                <h2>{analytics ? analytics.totalStudents : "..."}</h2>
-              </div>
+<div className="instructor-stat-card">
+    <div className="stat-card-top">
+        <span>Total Students</span>
+        <div className="stat-card-icon green">👨‍🎓</div>
+    </div>
+    <h2>{analytics ? analytics.totalStudents : "..."}</h2>
+    <p>Students enrolled in your courses</p>
+</div>
 
-              <div className="instructor-stat-card">
-                <span>Published Courses</span>
-                <h2>{analytics ? analytics.publishedCourses : "..."}</h2>
-              </div>
+<div className="instructor-stat-card">
+    <div className="stat-card-top">
+        <span>Published Courses</span>
+        <div className="stat-card-icon purple">🚀</div>
+    </div>
+    <h2>{analytics ? analytics.publishedCourses : "..."}</h2>
+    <p>Courses available to students</p>
+</div>
 
-              <div className="instructor-stat-card">
-                <span>Pending Approval</span>
-                <h2>{analytics ? analytics.pendingCourses : "..."}</h2>
-              </div>
+<div className="instructor-stat-card">
+    <div className="stat-card-top">
+        <span>Pending Approval</span>
+        <div className="stat-card-icon orange">⏳</div>
+    </div>
+    <h2>{analytics ? analytics.pendingCourses : "..."}</h2>
+    <p>Courses awaiting admin review</p>
+</div>
 
-            </div>
+</div>
 
             <div className="instructor-quick-actions">
               <h2>Quick Actions</h2>
