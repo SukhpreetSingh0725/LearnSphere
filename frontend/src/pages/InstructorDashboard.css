@@ -115,7 +115,7 @@
   /* Welcome Section */
   .instructor-welcome {
     background: linear-gradient(120deg, #2563eb, #4f46e5);
-    color: white;
+    color: rgb(8, 2, 2);
     padding: 32px;
     border-radius: 14px;
     margin-bottom: 28px;
@@ -128,7 +128,7 @@
   
   .instructor-welcome p {
     margin: 0;
-    color: #dbeafe;
+    color: #000000;
     line-height: 1.6;
   }
   
@@ -282,3 +282,152 @@
       grid-template-columns: 1fr;
     }
   }
+
+  /* Instructor Profile Link */
+
+.instructor-profile-link {
+  border: none;
+  background: transparent;
+  color: #1e293b;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 6px 0;
+  transition: color 0.2s;
+}
+
+.instructor-profile-link:hover {
+  color: #2563eb;
+  text-decoration: underline;
+}
+
+.instructor-avatar {
+  flex-shrink: 0;
+}
+
+/* Overview Statistics Cards */
+
+.instructor-stat-card {
+  padding: 24px;
+  border-radius: 14px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  box-shadow: 0 3px 10px rgba(15, 23, 42, 0.04);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.instructor-stat-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.09);
+}
+
+.stat-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.stat-card-top span {
+  font-size: 14px;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.stat-card-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 21px;
+}
+
+.stat-card-icon.blue {
+  background: #dbeafe;
+}
+
+.stat-card-icon.green {
+  background: #dcfce7;
+}
+
+.stat-card-icon.purple {
+  background: #ede9fe;
+}
+
+.stat-card-icon.orange {
+  background: #ffedd5;
+}
+
+.instructor-stat-card h2 {
+  font-size: 32px;
+  font-weight: 700;
+  margin: 18px 0 6px;
+  color: #000001;
+}
+
+.instructor-stat-card p {
+  margin: 0;
+  color: #010409;
+  font-size: 12px;
+}
+
+/* Overview UI Improvements */
+
+/* Statistic cards */
+.instructor-stat-card {
+  border: 1px solid #022044;
+}
+
+/* Instructor name and avatar card */
+.instructor-profile {
+  padding: 25px 23px;
+  border: 1px solid #0a63d1;
+  border-radius: 10px;
+  background: #ffffff;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04);
+}
+
+/* Welcome section description */
+.instructor-welcome p {
+  color: #000000;
+}
+
+/* Quick Actions card */
+.instructor-quick-actions {
+  border: 1px solid #0559c1;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+}
+
+/* Page heading and subtitle */
+.instructor-topbar > div:first-child {
+  padding-left: 25px;
+  padding-right: 25px;
+  padding-top: 15px;
+  padding-bottom: 15px;
+  border-left: 4px solid #031f5c;
+  background-color: #c8d5e7;
+}
+
+.instructor-topbar h1 {
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+.instructor-topbar p {
+  margin-top: 5px;
+  font-size: 14px;
+  color: #000000;
+}
+
+.instructor-dashboard .instructor-welcome h2 {
+  color: #ffffff !important;
+}
+
+.instructor-dashboard .instructor-welcome p {
+  color: #dbeafe !important;
+}
+.instructor-profile {
+  transform: translateY(-10px);
+}
