@@ -660,3 +660,534 @@
 .edit-lesson-form > div > div input {
   border: 1px solid #93c5fd;
 }
+
+/* Curriculum Builder Header */
+
+.curriculum-builder > h2 {
+  font-size: 27px;
+  font-weight: 700;
+  color: #0f172a;
+  letter-spacing: -0.5px;
+  margin-bottom: 8px;
+}
+
+.curriculum-builder > p {
+  color: #2563eb;
+  font-size: 14px;
+  margin-bottom: 25px;
+}
+
+/* Course Selector Card */
+
+.curriculum-course-select {
+  max-width: 900px;
+  padding: 20px;
+  background: #ffffff;
+  border: 1px solid #2563eb;
+  border-left: 4px solid #1d4ed8;
+  border-radius: 12px;
+  box-shadow: 0 3px 10px rgba(15, 23, 42, 0.05);
+}
+
+.curriculum-course-select label {
+  color: #1e40af;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.curriculum-course-select select {
+  border: 1px solid #2563eb;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.curriculum-course-select select:focus {
+  border: 2px solid #1d4ed8;
+  box-shadow: 0 0 0 3px #dbeafe;
+}
+
+/* Center Curriculum Builder Header */
+
+.curriculum-builder > h2,
+.curriculum-builder > p {
+    text-align: center;
+}
+
+.curriculum-course-select {
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* Curriculum Sections Card */
+
+.curriculum-sections {
+  padding: 24px;
+  background: #ffffff;
+  border: 1px solid #2563eb;
+  border-radius: 14px;
+  box-shadow: 0 3px 10px rgba(15, 23, 42, 0.04);
+}
+
+.curriculum-sections > h3 {
+  font-size: 21px;
+  font-weight: 700;
+  color: #1e40af;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #dbeafe;
+}
+
+/* Individual Section Cards */
+
+.curriculum-section {
+  padding: 20px;
+  margin-bottom: 16px;
+  border: 1px solid #93c5fd;
+  border-left: 4px solid #2563eb;
+  border-radius: 12px;
+  background: #f8fbff;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+  transition: box-shadow 0.2s ease;
+}
+
+.curriculum-section:hover {
+  box-shadow: 0 5px 14px rgba(15, 23, 42, 0.08);
+}
+
+.section-header h4 {
+  color: #1e3a8a;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.section-header p {
+  color: #64748b;
+  font-size: 13px;
+}
+/* Section Action Buttons */
+
+.section-actions button,
+.edit-section-form button {
+    padding: 8px 15px;
+    border-radius: 7px;
+    font-size: 12px;
+    font-weight: 600;
+    border: 1px solid transparent;
+    transition: all 0.2s ease;
+}
+
+.edit-section-btn,
+.edit-section-form button:first-of-type {
+    background: #eff6ff;
+    color: #1d4ed8;
+    border: 1px solid #93c5fd;
+}
+
+.edit-section-btn:hover,
+.edit-section-form button:first-of-type:hover {
+    background: #2563eb;
+    color: #ffffff;
+}
+
+.delete-section-btn {
+    background: #fff1f2;
+    color: #dc2626;
+    border: 1px solid #fda4af !important;
+}
+
+.delete-section-btn:hover {
+    background: #dc2626;
+    color: #ffffff;
+}
+/* Curriculum Lesson Cards */
+
+.curriculum-lesson {
+  padding: 16px 18px;
+  background: #ffffff;
+  border: 1px solid #bfdbfe;
+  border-radius: 10px;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04);
+  transition: box-shadow 0.2s ease;
+}
+
+.curriculum-lesson:hover {
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+}
+
+.lesson-info > span {
+  color: #1e293b;
+  font-weight: 600;
+}
+
+.curriculum-lesson small {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  border: 1px solid #bfdbfe;
+  color: #1d4ed8;
+  background: #eff6ff;
+}
+
+/* Lesson Action Buttons */
+
+.lesson-actions button {
+  padding: 8px 15px;
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.edit-lesson-btn {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #93c5fd !important;
+}
+
+.edit-lesson-btn:hover {
+  background: #2563eb;
+  color: #ffffff;
+}
+
+.delete-lesson-btn {
+  background: #fff1f2;
+  color: #dc2626;
+  border: 1px solid #fda4af !important;
+}
+
+.delete-lesson-btn:hover {
+  background: #dc2626;
+  color: #ffffff;
+}
+
+/* Add Section Form */
+
+.add-section-form {
+  max-width: 750px;
+  padding: 16px;
+  margin: 20px auto 25px;
+  background: #f8fbff;
+  border: 1px solid #045ec5;
+  border-radius: 10px;
+}
+
+.add-section-form input {
+  border: 1px solid #2563eb;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.add-section-form input:focus {
+  border: 2px solid #1d4ed8;
+  box-shadow: 0 0 0 3px #dbeafe;
+}
+
+.add-section-form button {
+  border: 1px solid #1d4ed8;
+  transition: all 0.2s ease;
+}
+
+.add-section-form button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(37, 99, 235, 0.18);
+}
+
+/* Add Lesson Form UI */
+
+.add-lesson-form {
+  padding: 18px;
+  background: #f8fbff;
+  border: 1px solid #93c5fd;
+  border-radius: 10px;
+}
+
+.add-lesson-form input,
+.add-lesson-form select {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 12px;
+  border: 1px solid #2563eb;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #1e293b;
+  font-size: 14px;
+}
+
+.add-lesson-form input:focus,
+.add-lesson-form select:focus {
+  border: 2px solid #1d4ed8;
+  box-shadow: 0 0 0 3px #dbeafe;
+  outline: none;
+}
+
+.add-lesson-form p {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: #64748b;
+  font-size: 12px;
+}
+
+.add-lesson-form button {
+  border: 1px solid #0f766e;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.add-lesson-form button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(15, 118, 110, 0.18);
+}
+/* Edit Lesson Form UI */
+
+.edit-lesson-form {
+  padding: 24px;
+  border: 1px solid #2563eb;
+  border-left: 4px solid #1d4ed8;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
+}
+
+.edit-lesson-form > input[type="text"],
+.edit-lesson-form > textarea {
+  border: 1px solid #2563eb;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.edit-lesson-form > input[type="text"]:focus,
+.edit-lesson-form > textarea:focus {
+  outline: none;
+  border: 2px solid #1d4ed8;
+  box-shadow: 0 0 0 3px #dbeafe;
+}
+
+.edit-lesson-form > label {
+  border: 1px dashed #2563eb;
+  background: #eff6ff;
+}
+
+.edit-lesson-form > div {
+  border: 1px solid #93c5fd;
+  background: #f8fbff;
+}
+
+.edit-lesson-form > div h4 {
+  color: #1e40af;
+}
+/* Edit Lesson Form Buttons */
+
+.edit-lesson-form > button {
+  padding: 10px 18px;
+  border: 1px solid #2563eb;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.edit-lesson-form > button:first-of-type {
+  background: #2563eb;
+  color: #ffffff;
+}
+
+.edit-lesson-form > button:first-of-type:hover {
+  background: #1d4ed8;
+}
+
+.edit-lesson-form > button:last-of-type {
+  background: #fff1f2;
+  color: #be123c;
+  border-color: #fda4af;
+}
+
+.edit-lesson-form > button:last-of-type:hover {
+  background: #e11d48;
+  color: #ffffff;
+  border-color: #e11d48;
+}
+/* Course FAQ Manager UI */
+
+.course-faq-manager {
+  padding: 25px;
+  background: #ffffff;
+  border: 1px solid #2563eb;
+  border-radius: 14px;
+  box-shadow: 0 3px 10px rgba(15, 23, 42, 0.05);
+}
+
+.faq-manager-header h3 {
+  font-size: 21px;
+  font-weight: 700;
+  color: #1e40af;
+}
+
+.faq-manager-header p {
+  color: #64748b;
+  font-size: 13px;
+}
+
+.faq-add-btn {
+  padding: 10px 18px;
+  background: #2563eb;
+  color: #ffffff;
+  border: 1px solid #1d4ed8;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.faq-add-btn:hover {
+  background: #1d4ed8;
+  transform: translateY(-2px);
+}
+/* FAQ Create Form */
+
+.faq-create-form {
+  padding: 20px;
+  margin: 18px 0;
+  background: #f8fbff;
+  border: 1px solid #93c5fd;
+  border-radius: 10px;
+}
+
+.faq-create-form input,
+.faq-create-form textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #1e293b;
+  font-size: 14px;
+}
+
+.faq-create-form input:focus,
+.faq-create-form textarea:focus {
+  outline: none;
+  border: 2px solid #2563eb;
+  box-shadow: 0 0 0 3px #dbeafe;
+}
+
+.faq-create-form button {
+  padding: 9px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.faq-create-form button:hover:not(:disabled) {
+  transform: translateY(-2px);
+}
+/* FAQ Management List */
+
+.faq-management-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.faq-management-item {
+  padding: 16px 18px;
+  background: #f8fbff;
+  border: 1px solid #bfdbfe;
+  border-left: 4px solid #2563eb;
+  border-radius: 10px;
+  transition: box-shadow 0.2s ease;
+}
+
+.faq-management-item:hover {
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.07);
+}
+/* FAQ Pagination */
+
+.faq-pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  margin-top: 22px;
+  flex-wrap: wrap;
+}
+
+.faq-pagination button {
+  padding: 8px 14px;
+  border: 1px solid #93c5fd;
+  border-radius: 7px;
+  background: #ffffff;
+  color: #1d4ed8;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.faq-pagination button:hover:not(:disabled) {
+  background: #2563eb;
+  color: #ffffff;
+}
+
+.faq-pagination button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+/* Curriculum Builder Responsive Polish */
+
+@media (max-width: 600px) {
+  .curriculum-builder {
+      padding: 15px;
+  }
+
+  .curriculum-sections,
+  .course-faq-manager {
+      padding: 16px;
+  }
+
+  .curriculum-section {
+      padding: 14px;
+  }
+
+  .section-header {
+      flex-wrap: wrap;
+      gap: 12px;
+  }
+
+  .section-actions,
+  .lesson-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+  }
+
+  .curriculum-lesson {
+      flex-wrap: wrap;
+      gap: 12px;
+  }
+
+  .add-section-form,
+  .add-lesson-form,
+  .edit-lesson-form,
+  .faq-create-form {
+      padding: 14px;
+  }
+
+  .edit-lesson-form > button {
+      margin-top: 8px;
+  }
+}
+.add-lesson-form input,
+.add-lesson-form select {
+  height: 46px;
+  padding: 0 12px;
+  box-sizing: border-box;
+  line-height: normal;
+}
+.add-lesson-form select {
+  transform: translateY(14px);
+}
+.add-lesson-form p {
+  font-size: 14px;
+  line-height: 1.5;
+  color: #030707;
+}
