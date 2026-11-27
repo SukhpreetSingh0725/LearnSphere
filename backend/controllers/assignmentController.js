@@ -134,6 +134,158 @@ const getInstructorAssignments = async (req, res) => {
     }
 };
 
+
+// Update Assignment
+const updateAssignment = async (req, res) => {
+    try {
+        const { assignmentId } = req.params;
+
+        const {
+            title,
+            description,
+            instructions,
+            dueDate,
+            maxMarks,
+            allowedFileTypes,
+            maxFileSizeMB
+        } = req.body;
+
+        const assignment = await Assignment.findById(assignmentId);
+
+        if (!assignment) {
+            return res.status(404).json({
+                success: false,
+                message: "Assignment not found"
+            });
+        }
+
+        if (
+            assignment.instructor.toString() !== req.user._id.toString() &&
+            req.user.role !== "admin"
+        ) {
+            return res.status(403).json({
+                success: false,
+                message: "You are not authorized to edit this assignment"
+            });
+        }
+
+        if (title !== undefined && !title.trim()) {
+            return res.status(400).json({
+                success: false,
+                message: "Assignment title is required"
+            });
+        }
+
+        if (description !== undefined && !description.trim()) {
+            return res.status(400).json({
+                success: false,
+                message: "Assignment description is required"
+            });
+        }
+
+        if (
+            dueDate !== undefined &&
+            dueDate !== null &&
+            dueDate !== "" &&
+            Number.isNaN(new Date(dueDate).getTime())
+        ) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid due date"
+            });
+        }
+
+        if (
+            maxMarks !== undefined &&
+            (!Number.isFinite(Number(maxMarks)) || Number(maxMarks) < 1)
+        ) {
+            return res.status(400).json({
+                success: false,
+                message: "Maximum marks must be at least 1"
+            });
+        }
+
+        if (
+            maxFileSizeMB !== undefined &&
+            (
+                !Number.isFinite(Number(maxFileSizeMB)) ||
+                Number(maxFileSizeMB) < 1 ||
+                Number(maxFileSizeMB) > 50
+            )
+        ) {
+            return res.status(400).json({
+                success: false,
+                message: "File size must be between 1 and 50 MB"
+            });
+        }
+
+        if (
+            allowedFileTypes !== undefined &&
+            (
+                !Array.isArray(allowedFileTypes) ||
+                allowedFileTypes.length === 0 ||
+                allowedFileTypes.some(
+                    type => typeof type !== "string" || !type.trim()
+                )
+            )
+        ) {
+            return res.status(400).json({
+                success: false,
+                message: "Select at least one valid file type"
+            });
+        }
+
+        if (maxMarks !== undefined) {
+            const newMaxMarks = Number(maxMarks);
+
+            const existingGradedSubmission = await AssignmentSubmission.findOne({
+                assignment: assignmentId,
+                status: "graded",
+                marksObtained: { $gt: newMaxMarks }
+            });
+
+            if (existingGradedSubmission) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Maximum marks cannot be lower than marks already awarded"
+                });
+            }
+
+            assignment.maxMarks = newMaxMarks;
+        }
+
+        if (title !== undefined) assignment.title = title.trim();
+        if (description !== undefined) assignment.description = description.trim();
+        if (instructions !== undefined) assignment.instructions = instructions;
+        if (dueDate !== undefined) assignment.dueDate = dueDate || null;
+
+        if (allowedFileTypes !== undefined) {
+            assignment.allowedFileTypes = allowedFileTypes.map(
+                type => type.trim().toLowerCase()
+            );
+        }
+
+        if (maxFileSizeMB !== undefined) {
+            assignment.maxFileSizeMB = Number(maxFileSizeMB);
+        }
+
+        await assignment.save();
+
+        return res.status(200).json({
+            success: true,
+            message: "Assignment updated successfully",
+            data: assignment
+        });
+
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+};
+
+
 // Toggle Assignment Publishing
 const toggleAssignmentPublish = async (req, res) => {
     try {
@@ -647,6 +799,7 @@ const gradeAssignmentSubmission = async (req, res) => {
 
 module.exports = {
     createAssignment,
+    updateAssignment,
     getInstructorAssignments,
     toggleAssignmentPublish,
     getStudentAssignments,
