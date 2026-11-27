@@ -37,6 +37,16 @@ function InstructorAssignments() {
     const [activePage, setActivePage] = useState("create");
     const [viewingAssignment, setViewingAssignment] = useState(null);
     const [viewingStudent, setViewingStudent] = useState(null);
+    const [editingAssignment, setEditingAssignment] = useState(false);
+    const [savingAssignment, setSavingAssignment] = useState(false);
+
+    const [editTitle, setEditTitle] = useState("");
+    const [editDescription, setEditDescription] = useState("");
+    const [editInstructions, setEditInstructions] = useState("");
+    const [editDueDate, setEditDueDate] = useState("");
+    const [editMaxMarks, setEditMaxMarks] = useState(100);
+    const [editMaxFileSizeMB, setEditMaxFileSizeMB] = useState(10);
+    const [editAllowedFileTypes, setEditAllowedFileTypes] = useState([]);
     // Your Assignments filters
     const [managementCourse, setManagementCourse] = useState("");
     const [managementSection, setManagementSection] = useState("");
@@ -372,6 +382,89 @@ function InstructorAssignments() {
         return matchesCourse && matchesSection;
     });
 
+    const handleStartEditingAssignment = () => {
+        setEditTitle(viewingAssignment.title || "");
+        setEditDescription(viewingAssignment.description || "");
+        setEditInstructions(viewingAssignment.instructions || "");
+    
+        if (viewingAssignment.dueDate) {
+            const date = new Date(viewingAssignment.dueDate);
+            const localDate = new Date(
+                date.getTime() - date.getTimezoneOffset() * 60000
+            );
+    
+            setEditDueDate(localDate.toISOString().slice(0, 16));
+        } else {
+            setEditDueDate("");
+        }
+    
+        setEditMaxMarks(viewingAssignment.maxMarks || 100);
+        setEditMaxFileSizeMB(viewingAssignment.maxFileSizeMB || 10);
+        setEditAllowedFileTypes(
+            viewingAssignment.allowedFileTypes || ["pdf", "doc", "docx", "zip"]
+        );
+    
+        setEditingAssignment(true);
+    };
+
+    const handleUpdateAssignment = async (e) => {
+        e.preventDefault();
+    
+        try {
+            setSavingAssignment(true);
+            setError("");
+            setMessage("");
+    
+            const response = await fetch(
+                `${API_URL}/api/assignments/${viewingAssignment._id}`,
+                {
+                    method: "PATCH",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        title: editTitle,
+                        description: editDescription,
+                        instructions: editInstructions,
+                        dueDate: editDueDate || null,
+                        maxMarks: Number(editMaxMarks),
+                        maxFileSizeMB: Number(editMaxFileSizeMB),
+                        allowedFileTypes: editAllowedFileTypes
+                    })
+                }
+            );
+    
+            const data = await response.json();
+    
+            if (!response.ok) {
+                throw new Error(data.message || "Failed to update assignment");
+            }
+    
+            await fetchData();
+
+            const updatedAssignment = (await fetch(
+                `${API_URL}/api/assignments/instructor`,
+                { headers }
+            ).then((res) => res.json())).data;
+
+            const refreshedAssignment = updatedAssignment?.find(
+                (item) => item._id === viewingAssignment._id
+            );
+
+            if (refreshedAssignment) {
+                setViewingAssignment(refreshedAssignment);
+            }
+            setEditingAssignment(false);
+            setMessage("Assignment updated successfully.");
+    
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setSavingAssignment(false);
+        }
+    };
+
     return (
         <div className="instructor-assignments">
             <h2>Assignment Management</h2>
@@ -644,15 +737,112 @@ function InstructorAssignments() {
                                 <button
                                     type="button"
                                     className="assignment-back-btn"
-                                    onClick={() => setViewingAssignment(null)}
+                                    onClick={() => {
+                                        setViewingAssignment(null);
+                                        setEditingAssignment(false);
+                                    }}
                                 >
                                     Back to Assignments
                                 </button>
+                                {!editingAssignment && (
+                                    <button
+                                        type="button"
+                                        onClick={handleStartEditingAssignment}
+                                    >
+                                        Edit Assignment
+                                    </button>
+                                )}
 
-                                <h3 className="assignment-details-title">
-                                    {viewingAssignment.title}
-                                </h3>
+                                {editingAssignment ? (
+                                    <form className="assignment-form assignment-edit-form" onSubmit={handleUpdateAssignment}>
+                                        <h3>Edit Assignment</h3>
 
+                                        <label>Assignment Title</label>
+                                        <input
+                                            type="text"
+                                            value={editTitle}
+                                            onChange={(e) => setEditTitle(e.target.value)}
+                                            required
+                                        />
+
+                                        <label>Description</label>
+                                        <textarea
+                                            value={editDescription}
+                                            onChange={(e) => setEditDescription(e.target.value)}
+                                            required
+                                        />
+
+                                        <label>Instructions</label>
+                                        <textarea
+                                            value={editInstructions}
+                                            onChange={(e) => setEditInstructions(e.target.value)}
+                                        />
+
+                                        <label>Due Date</label>
+                                        <input
+                                            type="datetime-local"
+                                            value={editDueDate}
+                                            onChange={(e) => setEditDueDate(e.target.value)}
+                                        />
+
+                                        <label>Maximum Marks</label>
+                                        <input
+                                            type="number"
+                                            min="1"
+                                            value={editMaxMarks}
+                                            onChange={(e) => setEditMaxMarks(e.target.value)}
+                                            required
+                                        />
+
+                                        <label>Maximum File Size (MB)</label>
+                                        <input
+                                            type="number"
+                                            min="1"
+                                            max="50"
+                                            value={editMaxFileSizeMB}
+                                            onChange={(e) => setEditMaxFileSizeMB(e.target.value)}
+                                            required
+                                        />
+
+                                        <label>Allowed File Types</label>
+                                        <div>
+                                            {["pdf", "doc", "docx", "zip"].map((type) => (
+                                                <label key={type}>
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={editAllowedFileTypes.includes(type)}
+                                                        onChange={(e) => {
+                                                            if (e.target.checked) {
+                                                                setEditAllowedFileTypes((prev) => [...prev, type]);
+                                                            } else {
+                                                                setEditAllowedFileTypes((prev) =>
+                                                                    prev.filter((item) => item !== type)
+                                                                );
+                                                            }
+                                                        }}
+                                                    />
+                                                    {type.toUpperCase()}
+                                                </label>
+                                            ))}
+                                        </div>
+
+                                        <button type="submit" disabled={savingAssignment}>
+                                            {savingAssignment ? "Saving..." : "Save Changes"}
+                                        </button>
+
+                                        <button
+                                            type="button"
+                                            onClick={() => setEditingAssignment(false)}
+                                            disabled={savingAssignment}
+                                        >
+                                            Cancel
+                                        </button>
+                                    </form>
+                                ) : (
+                                    <h3 className="assignment-details-title">{viewingAssignment.title}</h3>
+                                )}
+                                {!editingAssignment && (
+                                 <>
                                 <p className="assignment-detail-item">
                                     Course: {viewingAssignment.course?.title}
                                 </p>
@@ -698,6 +888,8 @@ function InstructorAssignments() {
                                 >
                                     {viewingAssignment.isPublished ? "Unpublish" : "Publish"}
                                 </button>
+                                    </>
+                                )}
                             </div>
                         )}
                     </>
