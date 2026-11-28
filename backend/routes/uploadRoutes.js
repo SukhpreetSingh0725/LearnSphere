@@ -3,7 +3,8 @@ const express = require("express");
 const {
     createVideoUploadUrl,
     createResourceUploadUrl,
-    createAssignmentUploadUrl
+    createAssignmentUploadUrl,
+    createProfileImageUploadUrl
 } = require("../controllers/uploadController");
 
 const { protect } = require("../middleware/authMiddleware");
@@ -30,6 +31,13 @@ router.post(
     protect,
     authorizeRoles("student"),
     createAssignmentUploadUrl
+);
+
+router.post(
+    "/profile-image",
+    protect,
+    authorizeRoles("instructor", "admin"),
+    createProfileImageUploadUrl
 );
 
 module.exports = router;

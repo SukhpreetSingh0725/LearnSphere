@@ -222,8 +222,69 @@ const createAssignmentUploadUrl = async (req, res) => {
     }
 };
 
+// POST /api/uploads/profile-image
+const createProfileImageUploadUrl = async (req, res) => {
+    try {
+        const { contentType, fileSize } = req.body;
+
+        const ALLOWED_IMAGE_TYPES = {
+            "image/jpeg": "jpg",
+            "image/png": "png",
+            "image/webp": "webp"
+        };
+
+        const ext = ALLOWED_IMAGE_TYPES[contentType];
+
+        if (!ext) {
+            return res.status(400).json({
+                success: false,
+                message: "Please choose a JPG, PNG or WebP image"
+            });
+        }
+
+        if (
+            !Number.isFinite(fileSize) ||
+            fileSize <= 0 ||
+            fileSize > 5 * 1024 * 1024
+        ) {
+            return res.status(400).json({
+                success: false,
+                message: "Profile image must be 5 MB or smaller"
+            });
+        }
+
+        const key = `profiles/${req.user._id}/${crypto.randomUUID()}.${ext}`;
+
+        const { data, error } = await supabase.storage
+            .from("profiles")
+            .createSignedUploadUrl(key);
+
+        if (error) {
+            return res.status(500).json({
+                success: false,
+                message: error.message
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            data: {
+                key,
+                token: data.token
+            }
+        });
+
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+};
+
 module.exports = {
     createVideoUploadUrl,
     createResourceUploadUrl,
-    createAssignmentUploadUrl
+    createAssignmentUploadUrl,
+    createProfileImageUploadUrl
 };

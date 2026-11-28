@@ -127,3 +127,52 @@ export const uploadAssignmentFile = async ({
       fileName: file.name
   };
 };
+
+
+export const uploadProfileImage = async ({ file, token }) => {
+  const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+
+  if (!allowedTypes.includes(file.type)) {
+      throw new Error("Please choose a JPG, PNG or WebP image");
+  }
+
+  if (file.size > 5 * 1024 * 1024) {
+      throw new Error("Profile image must be 5 MB or smaller");
+  }
+
+  const response = await fetch(`${API}/api/uploads/profile-image`, {
+      method: "POST",
+      headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify({
+          contentType: file.type,
+          fileSize: file.size
+      })
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+      throw new Error(data.message || "Unable to prepare profile image upload");
+  }
+
+  const { key, token: uploadToken } = data.data;
+
+  const { error } = await supabase.storage
+      .from("profiles")
+      .uploadToSignedUrl(key, uploadToken, file, {
+          contentType: file.type
+      });
+
+  if (error) {
+      throw new Error(error.message || "Profile image upload failed");
+  }
+
+  const { data: imageData } = supabase.storage
+      .from("profiles")
+      .getPublicUrl(key);
+
+  return imageData.publicUrl;
+};

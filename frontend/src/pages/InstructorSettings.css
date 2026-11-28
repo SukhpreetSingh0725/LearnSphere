@@ -1,7 +1,9 @@
+
 .instructor-settings {
     padding: 25px;
     background: #ffffff;
-    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
     max-width: 850px;
 }
 
@@ -24,6 +26,71 @@
     display: flex;
     flex-direction: column;
     gap: 20px;
+}
+
+.settings-profile-image {
+    display: flex;
+    align-items: center;
+    gap: 22px;
+    padding: 20px;
+    background: #f8fafc;
+    border: 1px solid #dbeafe;
+    border-radius: 12px;
+    margin-bottom: 5px;
+}
+
+.settings-avatar {
+    width: 95px;
+    height: 95px;
+    min-width: 95px;
+    border-radius: 50%;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #dbeafe;
+    border: 3px solid #93c5fd;
+    color: #1d4ed8;
+    font-size: 32px;
+    font-weight: 700;
+}
+
+.settings-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.settings-image-info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 9px;
+}
+
+.settings-image-info label {
+    display: inline-block;
+    padding: 10px 16px;
+    background: #2563eb;
+    color: #ffffff;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.settings-image-info label:hover {
+    background: #1d4ed8;
+}
+
+.settings-image-info input {
+    display: none;
+}
+
+.settings-image-info small {
+    color: #64748b;
+    font-size: 12px;
 }
 
 .settings-field {
@@ -96,11 +163,19 @@
 .settings-success {
     color: #15803d;
     font-size: 14px;
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    padding: 11px 14px;
+    border-radius: 8px;
 }
 
 .settings-error {
     color: #dc2626;
     font-size: 14px;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    padding: 11px 14px;
+    border-radius: 8px;
 }
 
 @media (max-width: 600px) {
@@ -110,5 +185,23 @@
 
     .settings-header h2 {
         font-size: 21px;
+    }
+
+    .settings-profile-image {
+        align-items: flex-start;
+        gap: 15px;
+        padding: 15px;
+    }
+
+    .settings-avatar {
+        width: 75px;
+        height: 75px;
+        min-width: 75px;
+        font-size: 26px;
+    }
+
+    .settings-image-info label {
+        font-size: 12px;
+        padding: 9px 12px;
     }
 }
